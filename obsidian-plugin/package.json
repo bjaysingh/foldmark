@@ -1,6 +1,6 @@
 {
   "name": "obsidian-markitdown",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Obsidian plugin that converts documents to Markdown with Microsoft MarkItDown.",
   "main": "main.js",
   "private": true,
@@ -8,7 +8,13 @@
     "dev": "node esbuild.config.mjs",
     "build": "tsc --noEmit --skipLibCheck && node esbuild.config.mjs production"
   },
-  "keywords": ["obsidian", "markdown", "markitdown", "pdf", "docx"],
+  "keywords": [
+    "obsidian",
+    "markdown",
+    "markitdown",
+    "pdf",
+    "docx"
+  ],
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.11.0",
