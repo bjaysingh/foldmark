@@ -1,29 +1,48 @@
-"""Colour and font constants, resolved per platform.
+"""Palette, type scale, and platform fonts.
 
-Tk silently substitutes a default face when a named font is missing, so the
-Windows-only "Segoe UI"/"Consolas" pair used previously rendered as an
-unstyled fallback on macOS. Resolving names per platform keeps the intended
-look on every supported OS.
+A quiet light palette: near-white ground, hairline separators instead of card
+borders, and a single accent reserved for the primary action so the eye lands
+on Convert and nothing else competes with it.
 """
 
 from __future__ import annotations
 
 import sys
 
+# Surfaces
+CANVAS = "#FBFBFD"          # window ground
+SURFACE = "#FFFFFF"         # raised areas: list rows, preview
+SUBTLE = "#F4F5F7"          # drop zone fill, hover
+HAIRLINE = "#E4E6EB"        # 1px separators, replaces card borders
+DROPZONE_EDGE = "#C9CED6"
+DROPZONE_ACTIVE = "#0A66FF"
+DROPZONE_ACTIVE_FILL = "#EDF3FF"
+
+# Text
+TEXT = "#1D1D1F"
+MUTED = "#6E7278"
+FAINT = "#9AA0A6"
+
+# Accent, used only on the primary action and links
+ACCENT = "#0A66FF"
+ACCENT_HOVER = "#0552D1"
+ACCENT_TEXT = "#FFFFFF"
+
+# Status
+SUCCESS = "#1A7F4B"
+ERROR = "#C0392B"
+WAITING = "#8A8F96"
+
+# Retained for the update and About dialogs
 NAVY = "#0B1F33"
-BLUE = "#1677FF"
-BLUE_HOVER = "#0D62D6"
-CANVAS = "#F4F7FA"
-CARD = "#FFFFFF"
-TEXT = "#17212B"
-MUTED = "#5F6B76"
-SUCCESS = "#138A5B"
-ERROR = "#C73737"
-LINK = "#1677FF"
-LINK_ON_NAVY = "#8FC2FF"
 HEADER_SUBTITLE = "#BFD4E8"
-PREVIEW_BG = "#F8FAFC"
-TROUGH = "#DFE7EF"
+LINK = ACCENT
+LINK_ON_NAVY = "#8FC2FF"
+CARD = SURFACE
+PREVIEW_BG = "#FCFCFD"
+TROUGH = "#E8EAEE"
+BLUE = ACCENT
+BLUE_HOVER = ACCENT_HOVER
 
 if sys.platform == "win32":
     UI_FONT = "Segoe UI"
@@ -35,9 +54,13 @@ else:
     UI_FONT = "DejaVu Sans"
     MONO_FONT = "DejaVu Sans Mono"
 
+# Type scale. Kept small and few: three sizes carry the whole interface.
+SIZE_TITLE = 19
+SIZE_BODY = 12
+SIZE_SMALL = 10
+
 
 def ui(size: int, weight: str | None = None) -> tuple:
-    """Return a Tk font tuple for the platform UI face."""
     return (UI_FONT, size, weight) if weight else (UI_FONT, size)
 
 
@@ -48,8 +71,8 @@ def mono(size: int) -> tuple:
 def resolve_fonts(root) -> None:
     """Fall back to a face Tk actually has, if the preferred one is missing.
 
-    ``SF Pro Text`` ships with recent macOS but not with every Python/Tk
-    build, so verify against the live font list rather than assuming.
+    Tk substitutes silently for an unknown font name, so the only reliable
+    check is asking the live interpreter what it has.
     """
     global UI_FONT, MONO_FONT
     try:

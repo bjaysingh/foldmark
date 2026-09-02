@@ -14,5 +14,9 @@
     "document-conversion"
   ],
   "hooks": "./hooks/hooks.json",
-  "commands": "./commands"
+  "commands": "./commands",
+  "author": {
+    "name": "Biswa Jaysingh",
+    "url": "https://github.com/bjaysingh"
+  }
 }
