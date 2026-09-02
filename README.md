@@ -149,6 +149,11 @@ the updater loop or skip, so the workflow refuses to publish it.
 python -m unittest discover -s tests -t .
 ```
 
+## License
+
+MIT — see [LICENSE](LICENSE). The Obsidian plugin and the Claude Code plugin in this
+repository are covered by the same license.
+
 ## Versions and attribution
 
 Configured for MarkItDown 0.1.7 and TkinterDnD2 0.6.2. `requirements.txt` names the MarkItDown

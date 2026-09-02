@@ -39,7 +39,9 @@ jobs:
           set -euo pipefail
           STAGE="build/markitdown-desktop-${VERSION}"
           mkdir -p "$STAGE"
-          cp -R app.py requirements.txt README.md THIRD-PARTY-NOTICES.md \
+          # LICENSE travels with the archive: MIT requires the notice to be
+          # included in every copy, and this archive is what the updater installs.
+          cp -R app.py requirements.txt README.md THIRD-PARTY-NOTICES.md LICENSE \
                 hook-tkinterdnd2.py markitdown_desktop "$STAGE"/
           cp Setup-*.bat Setup-*.command Start-*.bat Start-*.command \
              Build-*.bat Build-*.command "$STAGE"/

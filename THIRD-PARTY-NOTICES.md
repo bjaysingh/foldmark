@@ -1,5 +1,8 @@
 # Third-party notices
 
+This project is licensed under the MIT License; see [LICENSE](LICENSE). The notices below
+cover software it depends on, not this project itself.
+
 This application installs and uses the following open-source packages:
 
 - **MarkItDown** by Microsoft contributors — MIT License — https://github.com/microsoft/markitdown
