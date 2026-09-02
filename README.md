@@ -7,7 +7,8 @@ Obsidian plugin and a Claude Code plugin that share the same converter.
 ## What it does
 
 - Converts one file, many files, or an entire folder into Markdown
-- Supports PDF, Word, PowerPoint, Excel, HTML, CSV, JSON, XML, EPUB, ZIP, images, audio, email, and text
+- Supports PDF, Word (`.docx`), PowerPoint (`.pptx`), Excel (`.xlsx` and legacy `.xls`),
+  HTML, CSV, JSON, XML, EPUB, ZIP, images, audio, email, and text
 - Drag and drop, an output folder of your choosing, progress, preview, and copy
 - Processes local file paths only; the app does not accept URLs
 - Keeps going when one file in a batch fails
@@ -16,6 +17,14 @@ Obsidian plugin and a Claude Code plugin that share the same converter.
 
 MarkItDown optimizes its output for language models, indexing, and text analysis. It is not
 designed to recreate the visual appearance of the source document.
+
+**Formats it does not handle.** MarkItDown 0.1.7 registers no converter for the pre-2007 binary
+`.doc` and `.ppt` formats, so the app refuses them rather than producing nothing. Open them in
+Word or PowerPoint and save as `.docx` or `.pptx` first. Legacy `.xls` *is* supported.
+
+**Images and scanned PDFs.** Without OCR or a vision model, an image contains no extractable
+text, and a scanned PDF is just images of text. Those are reported as failures with the reason,
+rather than saved as empty files.
 
 ## Windows — first use
 
@@ -31,6 +40,11 @@ designed to recreate the visual appearance of the source document.
 
 If macOS reports that Tkinter is missing, use the current universal Python installer from
 python.org rather than a minimal command-line-only distribution.
+
+**If update checks report a certificate problem**, run `Install Certificates.command` from your
+`/Applications/Python 3.x/` folder. A fresh python.org install ships no CA certificates for
+OpenSSL until that runs. The app prefers `certifi`'s bundle, which the setup script installs, so
+this is rarely needed — but the message will tell you if it is.
 
 ## Everyday use
 
@@ -137,6 +151,9 @@ python -m unittest discover -s tests -t .
 
 ## Versions and attribution
 
-Configured for MarkItDown 0.1.7 and TkinterDnD2 0.6.2. MarkItDown is an open-source Microsoft
+Configured for MarkItDown 0.1.7 and TkinterDnD2 0.6.2. `requirements.txt` names the MarkItDown
+extras the app actually uses rather than `[all]`: `[all]` pins `youtube-transcript-api~=1.0.0`,
+which has no matching release on PyPI and makes the install fail, and it pulls in Azure SDKs and
+YouTube support this app cannot reach — it converts local files only and never fetches a URL. MarkItDown is an open-source Microsoft
 project licensed under MIT. This independent desktop frontend is not a Microsoft product and
 does not imply Microsoft sponsorship.
