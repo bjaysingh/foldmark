@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+build/
+dist/
+*.spec
+
+# Updater working files
+.update/
+
+# Obsidian plugin build output
+obsidian-plugin/node_modules/
+obsidian-plugin/main.js
+obsidian-plugin/*.js.map
+
+# OS
+.DS_Store
+Thumbs.db

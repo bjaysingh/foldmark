@@ -1,0 +1,173 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  source:
+    name: Build source release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check the tag matches __version__
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME#v}"
+          VERSION="$(python -c "import re,pathlib; print(re.search(r'__version__ = \"([^\"]+)\"', pathlib.Path('markitdown_desktop/__init__.py').read_text()).group(1))")"
+          echo "tag=$TAG  __version__=$VERSION"
+          if [ "$TAG" != "$VERSION" ]; then
+            echo "::error::Tag $TAG does not match markitdown_desktop.__version__ ($VERSION)."
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Run the test suite
+        run: python -m unittest discover -s tests -t .
+
+      - name: Build the source archive
+        run: |
+          set -euo pipefail
+          STAGE="build/markitdown-desktop-${VERSION}"
+          mkdir -p "$STAGE"
+          cp -R app.py requirements.txt README.md THIRD-PARTY-NOTICES.md \
+                hook-tkinterdnd2.py markitdown_desktop "$STAGE"/
+          cp Setup-*.bat Setup-*.command Start-*.bat Start-*.command \
+             Build-*.bat Build-*.command "$STAGE"/
+          # A fresh checkout carries no __pycache__, so nothing needs pruning here.
+          # Archive entries are rooted at the files themselves; the updater also
+          # tolerates a single wrapper directory, but flat keeps staging simple.
+          (cd "$STAGE" && zip -qr "../markitdown-desktop-${VERSION}-source.zip" .)
+          cd build && sha256sum "markitdown-desktop-${VERSION}-source.zip" > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "build/markitdown-desktop-${VERSION}-source.zip" \
+            "build/SHA256SUMS.txt" \
+            --title "MarkItDown Desktop ${VERSION}" \
+            --generate-notes
+
+  desktop-bundles:
+    name: Signed bundle (${{ matrix.os }})
+    needs: source
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pyinstaller
+
+      - name: Build the bundle
+        run: >
+          pyinstaller --noconfirm --clean --windowed
+          --name "MarkItDown Desktop"
+          --additional-hooks-dir=.
+          --collect-all markitdown
+          app.py
+
+      - name: Sign and notarize (macOS)
+        if: runner.os == 'macOS' && env.APPLE_DEVELOPER_ID != ''
+        env:
+          APPLE_DEVELOPER_ID: ${{ secrets.APPLE_DEVELOPER_ID }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          set -euo pipefail
+          codesign --deep --force --options runtime --timestamp \
+                   --sign "$APPLE_DEVELOPER_ID" "dist/MarkItDown Desktop.app"
+          ditto -c -k --keepParent "dist/MarkItDown Desktop.app" dist/notarize.zip
+          xcrun notarytool submit dist/notarize.zip \
+            --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_APP_PASSWORD" --wait
+          xcrun stapler staple "dist/MarkItDown Desktop.app"
+          ditto -c -k --keepParent "dist/MarkItDown Desktop.app" dist/MarkItDown-Desktop-macOS.zip
+
+      - name: Sign (Windows)
+        if: runner.os == 'Windows' && env.WINDOWS_CERT_BASE64 != ''
+        shell: pwsh
+        env:
+          WINDOWS_CERT_BASE64: ${{ secrets.WINDOWS_CERT_BASE64 }}
+          WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+        run: |
+          [IO.File]::WriteAllBytes("cert.pfx", [Convert]::FromBase64String($env:WINDOWS_CERT_BASE64))
+          & signtool sign /f cert.pfx /p $env:WINDOWS_CERT_PASSWORD /fd sha256 `
+            /tr http://timestamp.digicert.com /td sha256 `
+            "dist/MarkItDown Desktop/MarkItDown Desktop.exe"
+          Remove-Item cert.pfx
+          Compress-Archive -Path "dist/MarkItDown Desktop" -DestinationPath dist/MarkItDown-Desktop-Windows.zip
+
+      - name: Attach the bundle to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          shopt -s nullglob
+          files=(dist/MarkItDown-Desktop-*.zip)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No signed bundle produced (signing secrets absent); skipping upload."
+            exit 0
+          fi
+          gh release upload "$GITHUB_REF_NAME" "${files[@]}" --clobber
+
+  obsidian-plugin:
+    name: Build Obsidian plugin
+    needs: source
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: obsidian-plugin/package-lock.json
+
+      - name: Warn if the plugin version differs from the tag
+        working-directory: obsidian-plugin
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          VERSION="$(node -p "require('./manifest.json').version")"
+          if [ "$TAG" != "$VERSION" ]; then
+            echo "::warning::manifest.json is $VERSION but the tag is $TAG."
+          fi
+
+      - name: Build
+        working-directory: obsidian-plugin
+        run: |
+          npm ci
+          npm run build
+
+      - name: Attach the plugin assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "$GITHUB_REF_NAME" \
+            obsidian-plugin/main.js \
+            obsidian-plugin/manifest.json \
+            obsidian-plugin/versions.json \
+            --clobber

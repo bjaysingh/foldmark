@@ -1,0 +1,2 @@
+markitdown[all]==0.1.7
+tkinterdnd2==0.6.2

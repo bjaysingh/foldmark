@@ -1,0 +1,12 @@
+{
+  "name": "markitdown",
+  "displayName": "MarkItDown",
+  "version": "1.0.0",
+  "description": "Converts PDFs, Office documents, e-books, email, and audio to Markdown with Microsoft MarkItDown before Claude reads them.",
+  "homepage": "https://github.com/bjaysingh/microsoftmarkitdown",
+  "repository": "https://github.com/bjaysingh/microsoftmarkitdown",
+  "license": "MIT",
+  "keywords": ["markdown", "pdf", "docx", "markitdown", "document-conversion"],
+  "hooks": "./hooks/hooks.json",
+  "commands": "./commands"
+}

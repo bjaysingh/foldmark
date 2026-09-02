@@ -1,0 +1,10 @@
+{
+  "id": "markitdown",
+  "name": "MarkItDown",
+  "version": "1.0.0",
+  "minAppVersion": "1.5.0",
+  "description": "Convert PDFs, Office documents, e-books, email and audio into Markdown notes using Microsoft MarkItDown.",
+  "author": "bjaysingh",
+  "authorUrl": "https://github.com/bjaysingh/microsoftmarkitdown",
+  "isDesktopOnly": true
+}
