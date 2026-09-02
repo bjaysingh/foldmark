@@ -10,6 +10,8 @@ class FakeConverter:
     def convert(self, source: Path) -> str:
         if source.name.startswith("bad"):
             raise ValueError("deliberate failure")
+        if source.name.startswith("empty"):
+            return "   \n\n"
         return f"# {source.stem}\n\n{source.read_text(encoding='utf-8')}"
 
 
@@ -66,6 +68,22 @@ class ConverterTests(unittest.TestCase):
             results = convert_files([source], root, FakeConverter(), overwrite=True)
             self.assertEqual("original", source.read_text(encoding="utf-8"))
             self.assertEqual("notes-converted.md", results[0].output.name)
+
+    def test_empty_conversion_is_reported_as_a_failure(self) -> None:
+        """MarkItDown returns "" for a photo with no OCR rather than raising.
+
+        Writing a 0-byte .md and calling it a success hides that from the user.
+        """
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            source = root / "empty-image.txt"
+            source.write_text("ignored", encoding="utf-8")
+            output = root / "out"
+            results = convert_files([source], output, FakeConverter())
+            self.assertFalse(results[0].ok)
+            self.assertIn("No text could be extracted", results[0].message)
+            self.assertIsNone(results[0].output)
+            self.assertFalse((output / "empty-image.md").exists())
 
     def test_cancel_stops_before_first_file(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

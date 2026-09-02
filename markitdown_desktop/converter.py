@@ -141,6 +141,15 @@ def convert_files(
             markdown = converter.convert(source)
             if not isinstance(markdown, str):
                 raise TypeError("The converter did not return text.")
+            if not markdown.strip():
+                # MarkItDown returns an empty string rather than raising when a
+                # file has no extractable text - a photo with no OCR, a scanned
+                # PDF with no text layer. Writing a 0-byte .md and calling it a
+                # success hides that from the user.
+                raise ValueError(
+                    "No text could be extracted. Images need OCR and scanned "
+                    "PDFs need a text layer."
+                )
             _atomic_write(output, markdown)
             result = ConversionResult(source, output, True, "Converted")
         except Exception as exc:  # Each file should fail independently in a batch.

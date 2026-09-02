@@ -14,6 +14,7 @@ import ntpath
 import os
 import posixpath
 import shutil
+import ssl
 import stat
 import threading
 import urllib.request
@@ -51,6 +52,29 @@ ALLOWED_HOSTS = {
 
 class UpdateError(Exception):
     """Any condition that makes an update unsafe to continue."""
+
+
+def describe_network_error(exc: BaseException) -> str:
+    """Turn a urllib failure into something a person can act on."""
+    text = str(exc)
+    if "CERTIFICATE_VERIFY_FAILED" in text:
+        return (
+            "Could not verify the connection to GitHub. On macOS, run "
+            "\"Install Certificates.command\" from your Python installation folder, "
+            "then try again."
+        )
+    if "HTTP Error 404" in text:
+        return (
+            "GitHub returned 404 for this project's releases. The repository may be "
+            "private, or it may have no published releases yet."
+        )
+    if "HTTP Error 403" in text or "rate limit" in text.lower():
+        return "GitHub temporarily rate-limited this check. Try again later."
+    if "Name or service not known" in text or "nodename nor servname" in text or "getaddrinfo" in text:
+        return "No internet connection was available."
+    if "timed out" in text.lower():
+        return "The connection to GitHub timed out."
+    return f"Could not reach GitHub: {text}"
 
 
 # --------------------------------------------------------------------------- versions
@@ -113,19 +137,40 @@ def check_url(url: str) -> str:
     return url
 
 
+def ssl_context() -> Any:
+    """Verify TLS against certifi's bundle when it is available.
+
+    A stock python.org install on macOS ships no CA certificates for OpenSSL
+    until "Install Certificates.command" is run, so urllib raises
+    CERTIFICATE_VERIFY_FAILED for every HTTPS call. certifi is already present
+    as a MarkItDown dependency, so prefer its bundle and fall back to the
+    system default only if it cannot be imported.
+    """
+    try:
+        import certifi
+
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        return None
+
+
 def default_fetch_json(url: str, timeout: float = NETWORK_TIMEOUT) -> Any:
     request = urllib.request.Request(
         url,
         headers={"Accept": "application/vnd.github+json", "User-Agent": USER_AGENT},
     )
-    with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310 - scheme checked
+    with urllib.request.urlopen(  # noqa: S310 - scheme checked
+        request, timeout=timeout, context=ssl_context()
+    ) as response:
         return json.loads(response.read().decode("utf-8"))
 
 
 def fetch_text(url: str, timeout: float = NETWORK_TIMEOUT) -> str:
     check_url(url)
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310 - scheme checked
+    with urllib.request.urlopen(  # noqa: S310 - scheme checked
+        request, timeout=timeout, context=ssl_context()
+    ) as response:
         return response.read(1024 * 64).decode("utf-8", errors="replace")
 
 
@@ -156,15 +201,20 @@ def check_for_update(
     fetch_json: Callable[..., Any] = default_fetch_json,
     repo: str = GITHUB_REPO,
     skipped_version: str | None = None,
+    on_error: Callable[[str], None] | None = None,
 ) -> UpdateInfo | None:
     """Return the newer release to offer, or None.
 
     Every failure is a None, never an exception: a launch-time check must not
-    be able to stop the app from opening.
+    be able to stop the app from opening. ``on_error`` receives the reason so a
+    check the user asked for can say what went wrong rather than claiming the
+    app is up to date.
     """
     try:
         payload = fetch_json(_api_url(repo), timeout=NETWORK_TIMEOUT)
-    except Exception:
+    except Exception as exc:
+        if on_error:
+            on_error(describe_network_error(exc))
         return None
     if not isinstance(payload, dict):
         return None
@@ -221,7 +271,9 @@ def download_asset(
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     downloaded = 0
     try:
-        with urllib.request.urlopen(request, timeout=DOWNLOAD_TIMEOUT) as response:  # noqa: S310
+        with urllib.request.urlopen(  # noqa: S310 - scheme checked
+            request, timeout=DOWNLOAD_TIMEOUT, context=ssl_context()
+        ) as response:
             declared = int(response.headers.get("Content-Length") or expected_size or 0)
             if declared > max_bytes:
                 raise UpdateError("The update download is larger than expected; refusing it.")

@@ -1,2 +1,5 @@
-markitdown[all]==0.1.7
+# The app converts local files only, so the youtube-transcription and Azure
+# extras in markitdown[all] are unused. They are also unresolvable: [all] pins
+# youtube-transcript-api~=1.0.0, and PyPI has no 1.0.x release.
+markitdown[pdf,docx,xlsx,xls,pptx,outlook,audio-transcription]==0.1.7
 tkinterdnd2==0.6.2

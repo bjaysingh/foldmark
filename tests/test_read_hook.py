@@ -13,6 +13,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import zipfile
 
 HOOK_PATH = Path(__file__).resolve().parents[1] / "claude-plugin" / "hooks" / "markitdown_read_hook.py"
 
@@ -151,27 +152,48 @@ class PassThroughTests(HookHarness):
 
 
 class SubprocessTests(unittest.TestCase):
-    def test_real_invocation_exits_zero_even_without_markitdown(self) -> None:
-        """End-to-end through the real process boundary, not a stub.
+    """Through the real process boundary, the way Claude Code invokes the hook."""
 
-        MarkItDown is not installed in the test environment, so conversion
-        genuinely fails here — which is exactly the fail-open path that must
-        never break a Read.
-        """
+    def run_hook(self, source: Path, temp: str, **env_extra) -> subprocess.CompletedProcess:
+        event = json.dumps({"tool_name": "Read", "tool_input": {"file_path": str(source)}})
+        env = dict(os.environ, CLAUDE_PLUGIN_DATA=temp, MARKITDOWN_HOOK_TIMEOUT="60", **env_extra)
+        return subprocess.run(
+            [sys.executable, str(HOOK_PATH)], input=event,
+            capture_output=True, text=True, env=env, timeout=120,
+        )
+
+    def test_conversion_failure_leaves_the_read_untouched(self) -> None:
+        """Point the hook at an interpreter without MarkItDown; it must fail open."""
         with tempfile.TemporaryDirectory() as temp:
             source = Path(temp) / "report.docx"
             source.write_bytes(b"not really a docx")
-            event = json.dumps({
-                "tool_name": "Read",
-                "tool_input": {"file_path": str(source)},
-            })
-            env = dict(os.environ, CLAUDE_PLUGIN_DATA=temp, MARKITDOWN_HOOK_TIMEOUT="20")
-            result = subprocess.run(
-                [sys.executable, str(HOOK_PATH)], input=event,
-                capture_output=True, text=True, env=env, timeout=60,
-            )
+            result = self.run_hook(source, temp, MARKITDOWN_PYTHON="/usr/bin/false")
             self.assertEqual(0, result.returncode, result.stderr)
-            self.assertEqual("", result.stdout.strip())
+            self.assertEqual("", result.stdout.strip(), "a failure must produce no decision")
+
+    def test_real_document_is_converted_and_the_read_retargeted(self) -> None:
+        try:
+            import markitdown  # noqa: F401
+        except ImportError:
+            self.skipTest("MarkItDown is not installed in this environment")
+
+        with tempfile.TemporaryDirectory() as temp:
+            # A .zip of a .txt exercises a real MarkItDown converter without
+            # needing any platform-specific tool to author the fixture.
+            source = Path(temp) / "bundle.zip"
+            with zipfile.ZipFile(source, "w") as archive:
+                archive.writestr("notes.txt", "QUARTERLY REVENUE REPORT\n\nRevenue grew 18 percent.\n")
+
+            result = self.run_hook(source, temp)
+            self.assertEqual(0, result.returncode, result.stderr)
+            payload = json.loads(result.stdout)
+            output = payload["hookSpecificOutput"]
+            self.assertEqual("allow", output["permissionDecision"])
+
+            converted = Path(output["updatedInput"]["file_path"])
+            self.assertTrue(converted.is_file())
+            self.assertIn("QUARTERLY REVENUE REPORT", converted.read_text(encoding="utf-8"))
+            self.assertIn("MarkItDown", output["additionalContext"])
 
 
 if __name__ == "__main__":

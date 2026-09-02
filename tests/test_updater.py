@@ -205,6 +205,44 @@ class RequirementsTests(unittest.TestCase):
             self.assertTrue(updater.requirements_changed(old, new))
 
 
+class NetworkFailureTests(unittest.TestCase):
+    def test_check_reports_why_it_failed(self) -> None:
+        """A user-initiated check must not answer "up to date" after a failure."""
+        def boom(url: str, timeout: float = 5.0):
+            raise OSError("[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed")
+
+        reasons: list[str] = []
+        info = updater.check_for_update("1.0.0", fetch_json=boom, on_error=reasons.append)
+        self.assertIsNone(info)
+        self.assertEqual(1, len(reasons))
+        self.assertIn("Install Certificates", reasons[0])
+
+    def test_check_still_returns_none_without_a_reporter(self) -> None:
+        def boom(url: str, timeout: float = 5.0):
+            raise OSError("no network")
+
+        self.assertIsNone(updater.check_for_update("1.0.0", fetch_json=boom))
+
+    def test_failures_are_described_in_terms_a_person_can_act_on(self) -> None:
+        cases = [
+            ("[SSL: CERTIFICATE_VERIFY_FAILED] x", "Install Certificates"),
+            ("HTTP Error 404: Not Found", "private"),
+            ("HTTP Error 403: rate limit exceeded", "rate-limited"),
+            ("<urlopen error [Errno 8] nodename nor servname provided>", "internet"),
+            ("The read operation timed out", "timed out"),
+        ]
+        for raw, expected in cases:
+            with self.subTest(raw=raw):
+                self.assertIn(expected, updater.describe_network_error(OSError(raw)))
+
+    def test_ssl_context_prefers_certifi_when_available(self) -> None:
+        try:
+            import certifi  # noqa: F401
+        except ImportError:
+            self.skipTest("certifi is not installed in this environment")
+        self.assertIsNotNone(updater.ssl_context())
+
+
 class UrlGuardTests(unittest.TestCase):
     def test_non_https_is_refused(self) -> None:
         with self.assertRaises(updater.UpdateError):

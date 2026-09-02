@@ -234,10 +234,22 @@ class App:
         AboutDialog(self.root, __version__, markitdown_version())
 
     def _enable_drag_drop(self) -> None:
+        """Register drag and drop, degrading quietly when tkdnd is unavailable.
+
+        Importing tkinterdnd2 patches drop_target_register onto every widget, so
+        the attribute exists even when the underlying tkdnd Tcl package failed
+        to load - which happens when the root window was not created by
+        TkinterDnD.Tk(), or when the platform binary is missing. Only calling it
+        reveals the truth, so the call itself is the test. Drag and drop is a
+        convenience; the Add files buttons do the same job.
+        """
         if DND_FILES is None or not hasattr(self.tree, "drop_target_register"):
             return
-        self.tree.drop_target_register(DND_FILES)
-        self.tree.dnd_bind("<<Drop>>", self._on_drop)
+        try:
+            self.tree.drop_target_register(DND_FILES)
+            self.tree.dnd_bind("<<Drop>>", self._on_drop)
+        except tk.TclError:
+            pass
 
     def _bind_shortcuts(self) -> None:
         modifier = "Command" if platform.system() == "Darwin" else "Control"
@@ -389,6 +401,8 @@ class App:
                     self._launch_applier(event[1], event[2])
                 elif kind == "update_failed":
                     self._update_failed(event[1])
+                elif kind == "update_unavailable":
+                    self._update_unavailable(event[1], event[2])
         except queue.Empty:
             pass
         self.root.after(100, self._poll_events)
@@ -463,8 +477,16 @@ class App:
         # A manual check ignores a previously skipped version: asking explicitly
         # is a clear signal the user wants to know either way.
         skipped = None if manual else data.get("skipped_version")
-        info = updater.check_for_update(__version__, skipped_version=skipped)
+        problems: list[str] = []
+        info = updater.check_for_update(
+            __version__, skipped_version=skipped, on_error=problems.append
+        )
         settings.update(last_check=settings.utc_now())
+        if info is None and problems:
+            # Silence is fine for the launch check, but a check the user asked
+            # for must never answer "up to date" when it never reached GitHub.
+            self.events.put(("update_unavailable", problems[0], manual))
+            return
         self.events.put(("update_result", info, manual))
 
     def _report_previous_failure(self) -> None:
@@ -493,6 +515,12 @@ class App:
             self.summary_var.set(f"Version {info.version} skipped")
         elif choice == "update":
             self._begin_update(info)
+
+    def _update_unavailable(self, reason: str, manual: bool) -> None:
+        if not manual:
+            return
+        self.summary_var.set("Could not check for updates")
+        messagebox.showwarning("Could not check for updates", reason)
 
     def _begin_update(self, info) -> None:
         self.updating = True
