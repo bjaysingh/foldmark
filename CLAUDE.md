@@ -112,8 +112,14 @@ are the intended default, not a misconfiguration.
 - **MarkItDown 0.1.7 supports neither legacy `.doc` nor `.ppt`** — it registers no converter
   for either binary format. Legacy `.xls` *is* supported. Both are absent from
   `SUPPORTED_EXTENSIONS` and are refused with a clear message.
-- **Images and scanned PDFs produce no text** without OCR, which MarkItDown does not include.
-  An empty conversion is reported as a failure rather than written as a 0-byte file.
+- **MarkItDown includes no OCR**, so `ocr.py` supplies it: Apple Vision on macOS via PyObjC,
+  Tesseract elsewhere. `OcrFallbackConverter` *wraps* a `Converter` rather than modifying one —
+  it calls the wrapped converter first and reaches for an engine only when the result is empty
+  or near-empty and the file is an image or a PDF. Text-layer PDFs are therefore never
+  rasterised and their output is byte-identical to before OCR existed; a test asserts this.
+  An engine is injected, never imported at the call site, so the suite still runs with no OCR
+  installed. A missing engine is not an error — it restores the old behaviour, with an install
+  hint attached to the failure message.
 - **Update integrity is checksum-based, not authenticated.** SHA-256 proves the download was
   not corrupted in transit; it does not prove authorship. Whoever controls the repository
   controls what users install.

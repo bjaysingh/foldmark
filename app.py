@@ -13,6 +13,12 @@ from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
 from markitdown_desktop import __version__, settings, theme, updater
+from markitdown_desktop.ocr import (
+    OcrFallbackConverter,
+    available_engine,
+    mode_from_settings,
+    usage_summary,
+)
 from markitdown_desktop.converter import (
     ConversionResult,
     MicrosoftMarkItDownConverter,
@@ -131,6 +137,7 @@ class App:
         self.events: queue.Queue[tuple] = queue.Queue()
         self.cancel_event = threading.Event()
         self.running = False
+        self.ocr_note = ""
         self.updating = False
         self.update_progress: UpdateProgressDialog | None = None
         self.preview_open = False
@@ -379,7 +386,8 @@ class App:
             self.preview_open = False
 
     def show_about(self) -> None:
-        AboutDialog(self.root, __version__, markitdown_version())
+        AboutDialog(self.root, __version__, markitdown_version(),
+                    ocr_engine=getattr(available_engine(), "name", None))
 
     # ------------------------------------------------------------------ input
 
@@ -522,11 +530,34 @@ class App:
 
     def _convert_worker(self, sources: list[Path], output_dir: Path, overwrite: bool) -> None:
         try:
-            converter = MicrosoftMarkItDownConverter()
+            from markitdown_desktop import settings as settings_module
+
+            data = settings_module.load()
+            mode = mode_from_settings(data)
+            engine = available_engine() if mode != "never" else None
+            converter = OcrFallbackConverter(
+                MicrosoftMarkItDownConverter(), engine,
+                mode=mode, language=data.get("ocr_language", "eng"),
+            )
+
+            # convert_files reports one file at a time, so OCR use is tallied as
+            # each result lands rather than inferred from the finished batch.
+            tally = {"files": 0, "pages": 0}
+
+            def on_progress(count: int, total: int, result) -> None:
+                if converter.last_pages:
+                    tally["files"] += 1
+                    tally["pages"] += converter.last_pages
+                self.events.put(("progress", count, total, result))
+
             results = convert_files(
                 sources, output_dir, converter, overwrite=overwrite,
                 cancel_event=self.cancel_event,
-                progress=lambda c, t, r: self.events.put(("progress", c, t, r)),
+                progress=on_progress,
+            )
+            self.ocr_note = usage_summary(
+                files=tally["files"], pages=tally["pages"],
+                engine=getattr(engine, "name", "OCR"),
             )
             self.events.put(("done", results, len(sources)))
         except Exception as exc:
@@ -578,13 +609,17 @@ class App:
         succeeded = sum(r.ok for r in results)
         failed = len(results) - succeeded
         if len(results) < requested:
-            self.summary_var.set(f"Cancelled — {succeeded} converted, {failed} failed")
+            summary = f"Cancelled — {succeeded} converted, {failed} failed"
         elif failed:
-            self.summary_var.set(f"{succeeded} converted, {failed} failed")
+            summary = f"{succeeded} converted, {failed} failed"
         else:
-            self.summary_var.set(
+            summary = (
                 f"{succeeded} file{'' if succeeded == 1 else 's'} converted to "
                 f"{_shorten(Path(self.output_var.get()), 34)}")
+        # Silent OCR would leave the user wondering where the text came from.
+        if self.ocr_note:
+            summary = f"{summary}  ·  {self.ocr_note}"
+        self.summary_var.set(summary)
         first = next((i for i in self.tree.get_children() if i in self.outputs), None)
         if first:
             self.tree.selection_set(first)

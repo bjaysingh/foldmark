@@ -170,7 +170,8 @@ class UpdateProgressDialog:
 class AboutDialog:
     """States the MarkItDown dependency plainly and links to both sources."""
 
-    def __init__(self, parent: tk.Misc, app_version: str, markitdown_version: str) -> None:
+    def __init__(self, parent: tk.Misc, app_version: str, markitdown_version: str,
+                 *, ocr_engine: str | None = None) -> None:
         window = tk.Toplevel(parent)
         window.title("About MarkItDown Desktop")
         window.configure(bg=theme.CANVAS)
@@ -203,6 +204,13 @@ class AboutDialog:
 
         tk.Label(body, text=f"Installed MarkItDown version: {markitdown_version}",
                  bg=theme.CANVAS, fg=theme.MUTED, font=theme.ui(9)).pack(anchor="w", pady=(4, 0))
+
+        # MarkItDown itself has no OCR, so scanned pages depend entirely on
+        # whichever engine is installed here - worth stating outright.
+        from .ocr import about_line
+
+        tk.Label(body, text=about_line(ocr_engine), bg=theme.CANVAS, fg=theme.MUTED, justify="left",
+                 wraplength=430, font=theme.ui(9)).pack(anchor="w", pady=(2, 0))
 
         row2 = tk.Frame(body, bg=theme.CANVAS)
         row2.pack(anchor="w", pady=(10, 0))

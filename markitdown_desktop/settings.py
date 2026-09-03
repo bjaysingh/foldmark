@@ -20,6 +20,8 @@ DEFAULTS: dict[str, Any] = {
     "skipped_version": None,
     "last_check": None,
     "auto_check": True,
+    "ocr_enabled": True,
+    "ocr_language": "eng",
 }
 
 
@@ -45,6 +47,10 @@ def load(path: Path = SETTINGS_PATH) -> dict[str, Any]:
             data[key] = raw[key]
     if not isinstance(data["auto_check"], bool):
         data["auto_check"] = DEFAULTS["auto_check"]
+    if not isinstance(data["ocr_enabled"], bool):
+        data["ocr_enabled"] = DEFAULTS["ocr_enabled"]
+    if not isinstance(data["ocr_language"], str) or not data["ocr_language"].strip():
+        data["ocr_language"] = DEFAULTS["ocr_language"]
     if data["skipped_version"] is not None and not isinstance(data["skipped_version"], str):
         data["skipped_version"] = None
     return data

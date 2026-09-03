@@ -3,3 +3,10 @@
 # youtube-transcript-api~=1.0.0, and PyPI has no 1.0.x release.
 markitdown[pdf,docx,xlsx,xls,pptx,outlook,audio-transcription]==0.1.7
 tkinterdnd2==0.6.2
+
+# OCR for images and scanned PDFs. MarkItDown ships none, so without one of
+# these a photograph of text converts to nothing. Apple Vision needs only the
+# binding - the recogniser is part of macOS - while Tesseract also needs its
+# own binary, which the app reports as a missing engine rather than a crash.
+pyobjc-framework-Vision==12.2.2; sys_platform == "darwin"
+pytesseract==0.3.13; sys_platform != "darwin"

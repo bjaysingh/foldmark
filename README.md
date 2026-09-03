@@ -22,9 +22,17 @@ designed to recreate the visual appearance of the source document.
 `.doc` and `.ppt` formats, so the app refuses them rather than producing nothing. Open them in
 Word or PowerPoint and save as `.docx` or `.pptx` first. Legacy `.xls` *is* supported.
 
-**Images and scanned PDFs.** Without OCR or a vision model, an image contains no extractable
-text, and a scanned PDF is just images of text. Those are reported as failures with the reason,
-rather than saved as empty files.
+**Images and scanned PDFs.** MarkItDown itself extracts no text from a photograph or from a
+scanned PDF that has no text layer. The app fills that gap with OCR: on macOS it uses Apple's
+Vision framework, which is part of the system and needs only the `pyobjc-framework-Vision`
+binding; on Windows and Linux it uses Tesseract via `pytesseract`, which also needs the
+Tesseract binary installed.
+
+OCR runs only when it is needed. A file is converted normally first, and the engine is called
+only if that produced no usable text, so PDFs that already carry a text layer are never
+rasterised and their output does not change. If no engine is installed, such a file is still
+reported as a failure — now with the install command for your platform. The About dialog names
+the engine in use, or says there is none.
 
 ## Windows — first use
 
@@ -121,8 +129,10 @@ Conversion runs locally. MarkItDown reads files with the permissions of the curr
 only open files you trust. This frontend deliberately calls MarkItDown's `convert_local()`
 method and does not expose remote-URL conversion.
 
-Audio transcription and image OCR quality depend on the local libraries and metadata available
-to MarkItDown. Complex or scanned PDFs may not preserve every table, equation, or layout detail.
+Audio transcription depends on the local libraries available to MarkItDown. OCR accuracy
+depends on the engine and on scan quality; it recovers text, not layout, so a scanned table
+comes back as lines rather than as a Markdown table. Complex PDFs may not preserve every table,
+equation, or layout detail.
 
 ## Troubleshooting
 

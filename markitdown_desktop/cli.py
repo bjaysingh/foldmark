@@ -6,6 +6,7 @@ is a thin shell over ``converter.py`` — the same discovery rules, the same
 collision-safe naming, the same per-file failure isolation as the desktop app.
 
     python -m markitdown_desktop.cli convert <path>... --out <dir> [--json]
+    python -m markitdown_desktop.cli convert <path> --ocr always --ocr-language deu
     python -m markitdown_desktop.cli convert <path> --stdout
     python -m markitdown_desktop.cli extensions --json
     python -m markitdown_desktop.cli version --json
@@ -28,6 +29,7 @@ from .converter import (
     convert_files,
     discover_files,
 )
+from .ocr import OcrFallbackConverter, available_engine
 
 EXIT_OK = 0
 EXIT_FAILED = 1
@@ -59,6 +61,22 @@ class _Parser(argparse.ArgumentParser):
         raise SystemExit(EXIT_USAGE)
 
 
+def _bound_parser_class(stderr: TextIO | None):
+    """A _Parser that already knows where to report errors.
+
+    Subparsers are built by argparse itself, so without this the ``convert``
+    parser would fall back to the process's real stderr and both plugins would
+    see an exit code with no message attached.
+    """
+
+    class BoundParser(_Parser):
+        def __init__(self, *args, **kwargs) -> None:
+            kwargs.setdefault("stderr", stderr)
+            super().__init__(*args, **kwargs)
+
+    return BoundParser
+
+
 def _build_parser(stderr: TextIO | None = None) -> argparse.ArgumentParser:
     parser = _Parser(
         stderr=stderr,
@@ -66,7 +84,7 @@ def _build_parser(stderr: TextIO | None = None) -> argparse.ArgumentParser:
         description="Convert documents to Markdown using Microsoft MarkItDown.",
         add_help=True,
     )
-    sub = parser.add_subparsers(dest="command")
+    sub = parser.add_subparsers(dest="command", parser_class=_bound_parser_class(stderr))
 
     convert = sub.add_parser("convert", help="Convert files or folders to Markdown.")
     convert.add_argument("paths", nargs="+", help="Files or folders to convert.")
@@ -76,6 +94,12 @@ def _build_parser(stderr: TextIO | None = None) -> argparse.ArgumentParser:
     convert.add_argument("--overwrite", action="store_true",
                          help="Replace an existing .md of the same name instead of adding -2, -3.")
     convert.add_argument("--json", action="store_true", help="Emit a machine-readable result.")
+    convert.add_argument(
+        "--ocr", choices=("auto", "never", "always"), default="auto",
+        help="OCR images and scanned PDFs: auto (only when no text was found), never, or always.")
+    convert.add_argument(
+        "--ocr-language", default=None,
+        help="OCR language as a Tesseract code, e.g. eng or deu. Defaults to the app setting.")
 
     extensions = sub.add_parser("extensions", help="List the supported file extensions.")
     extensions.add_argument("--json", action="store_true")
@@ -93,7 +117,26 @@ def _emit(stream: TextIO, payload: dict, as_json: bool, plain: str) -> None:
         stream.write(plain + "\n")
 
 
-def _convert(args, converter_factory, stdout: TextIO, stderr: TextIO) -> int:
+def _ocr_language(explicit: str | None) -> str:
+    if explicit:
+        return explicit
+    try:
+        from .settings import load
+
+        return load()["ocr_language"]
+    except Exception:
+        return "eng"
+
+
+def _with_ocr(converter, args, engine_factory):
+    """Layer OCR over any converter. A missing engine is not an error here."""
+    engine = None if args.ocr == "never" else engine_factory()
+    return OcrFallbackConverter(
+        converter, engine, mode=args.ocr, language=_ocr_language(args.ocr_language)
+    )
+
+
+def _convert(args, converter_factory, engine_factory, stdout: TextIO, stderr: TextIO) -> int:
     if not args.stdout and not args.out:
         stderr.write("Specify where to write the Markdown with --out, or use --stdout.\n")
         return EXIT_USAGE
@@ -111,6 +154,8 @@ def _convert(args, converter_factory, stdout: TextIO, stderr: TextIO) -> int:
     except Exception as exc:
         stderr.write(f"{exc}\n")
         return EXIT_FAILED
+
+    converter = _with_ocr(converter, args, engine_factory)
 
     if args.stdout:
         source = accepted[0]
@@ -151,6 +196,7 @@ def main(
     argv: list[str] | None = None,
     *,
     converter_factory: Callable[[], object] = MicrosoftMarkItDownConverter,
+    engine_factory: Callable[[], object] = available_engine,
     stdout: TextIO | None = None,
     stderr: TextIO | None = None,
 ) -> int:
@@ -166,7 +212,7 @@ def main(
         return EXIT_USAGE
 
     if args.command == "convert":
-        return _convert(args, converter_factory, stdout, stderr)
+        return _convert(args, converter_factory, engine_factory, stdout, stderr)
 
     if args.command == "extensions":
         extensions = sorted(SUPPORTED_EXTENSIONS)
@@ -174,16 +220,19 @@ def main(
         return EXIT_OK
 
     if args.command == "version":
+        engine = engine_factory()
         payload = {
             "app_version": __version__,
             "markitdown_version": markitdown_version(),
             "python": sys.version.split()[0],
             "executable": sys.executable,
+            "ocr_engine": getattr(engine, "name", None),
         }
         plain = (
             f"MarkItDown Desktop {payload['app_version']}\n"
             f"Microsoft MarkItDown {payload['markitdown_version']}\n"
-            f"Python {payload['python']}"
+            f"Python {payload['python']}\n"
+            f"OCR {payload['ocr_engine'] or 'not available'}"
         )
         _emit(stdout, payload, args.json, plain)
         return EXIT_OK
