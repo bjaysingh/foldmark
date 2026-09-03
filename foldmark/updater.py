@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import urlparse
 
-GITHUB_REPO = "bjaysingh/microsoftmarkitdown"
+GITHUB_REPO = "bjaysingh/foldmark"
 PROJECT_URL = f"https://github.com/{GITHUB_REPO}"
 MARKITDOWN_URL = "https://github.com/microsoft/markitdown"
 
@@ -40,7 +40,7 @@ ASSET_PREFIX = "markitdown-desktop-"
 ASSET_SUFFIX = "-source.zip"
 CHECKSUMS_NAME = "SHA256SUMS.txt"
 
-REQUIRED_ENTRIES = ("app.py", "requirements.txt", os.path.join("markitdown_desktop", "__init__.py"))
+REQUIRED_ENTRIES = ("app.py", "requirements.txt", os.path.join("foldmark", "__init__.py"))
 
 ALLOWED_HOSTS = {
     "github.com",

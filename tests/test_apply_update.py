@@ -3,15 +3,15 @@ import json
 import tempfile
 import unittest
 
-from markitdown_desktop import apply_update
+from foldmark import apply_update
 
 
 PROTECTED = (".venv", ".update", ".git")
 
 
 def build_root(root: Path, version: str = "1.0.0") -> Path:
-    (root / "markitdown_desktop").mkdir(parents=True)
-    (root / "markitdown_desktop" / "__init__.py").write_text(
+    (root / "foldmark").mkdir(parents=True)
+    (root / "foldmark" / "__init__.py").write_text(
         f"__version__ = '{version}'\n", encoding="utf-8"
     )
     (root / "app.py").write_text("# old app\n", encoding="utf-8")
@@ -23,8 +23,8 @@ def build_root(root: Path, version: str = "1.0.0") -> Path:
 
 
 def build_staging(staging: Path, version: str = "1.1.0", requirements: str = "a==1\n") -> Path:
-    (staging / "markitdown_desktop").mkdir(parents=True)
-    (staging / "markitdown_desktop" / "__init__.py").write_text(
+    (staging / "foldmark").mkdir(parents=True)
+    (staging / "foldmark" / "__init__.py").write_text(
         f"__version__ = '{version}'\n", encoding="utf-8"
     )
     (staging / "app.py").write_text("# new app\n", encoding="utf-8")
@@ -82,7 +82,7 @@ class SwapTests(unittest.TestCase):
             ok, message = apply_update.apply(root, runner=runner)
             self.assertTrue(ok, message)
             self.assertEqual("# new app\n", (root / "app.py").read_text(encoding="utf-8"))
-            self.assertIn("1.1.0", (root / "markitdown_desktop" / "__init__.py").read_text(encoding="utf-8"))
+            self.assertIn("1.1.0", (root / "foldmark" / "__init__.py").read_text(encoding="utf-8"))
             self.assertEqual("keep me", (root / ".venv" / "marker.txt").read_text(encoding="utf-8"))
             self.assertTrue((root / ".update" / "backup" / "1.0.0" / "app.py").exists())
             self.assertFalse((root / ".update" / "pending.json").exists())
@@ -113,11 +113,11 @@ class SwapTests(unittest.TestCase):
             root = build_root(Path(temp))
             build_staging(root / ".update" / "staging" / "1.1.0")
             write_pending(root)
-            runner = Runner(fail_on="import markitdown_desktop")
+            runner = Runner(fail_on="import foldmark")
             ok, message = apply_update.apply(root, runner=runner)
             self.assertFalse(ok)
             self.assertEqual("# old app\n", (root / "app.py").read_text(encoding="utf-8"))
-            self.assertIn("1.0.0", (root / "markitdown_desktop" / "__init__.py").read_text(encoding="utf-8"))
+            self.assertIn("1.0.0", (root / "foldmark" / "__init__.py").read_text(encoding="utf-8"))
             self.assertTrue((root / ".update" / "last_error.txt").exists())
             self.assertTrue(runner.launched, "the old version must still be relaunched")
 

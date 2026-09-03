@@ -50,7 +50,7 @@ function candidateRoots(settings: MarkItDownSettings): string[] {
 export function resolveProjectRoot(settings: MarkItDownSettings): string | null {
   for (const root of candidateRoots(settings)) {
     try {
-      if (fs.existsSync(path.join(root, "markitdown_desktop", "cli.py"))) return root;
+      if (fs.existsSync(path.join(root, "foldmark", "cli.py"))) return root;
     } catch {
       // An unreadable candidate is simply not the one.
     }
@@ -120,7 +120,7 @@ async function runCli(
       root,
     };
   }
-  const command = [...interpreter, "-m", "markitdown_desktop.cli", ...args];
+  const command = [...interpreter, "-m", "foldmark.cli", ...args];
   const result = await run(command, root, timeoutMs);
   return { result, interpreter: interpreter.join(" "), root };
 }

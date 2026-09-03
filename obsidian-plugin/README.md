@@ -35,7 +35,7 @@ app's behaviour.
 
 | Setting | Default | Purpose |
 |---|---|---|
-| Converter location | auto-detect | Folder containing `markitdown_desktop/` |
+| Converter location | auto-detect | Folder containing `foldmark/` |
 | Python interpreter | auto-detect | Overrides the converter's own `.venv` |
 | Output folder | `MarkItDown` | Vault-relative destination for converted notes |
 | Open the note after converting | on | Opens the first result |
@@ -55,7 +55,7 @@ To test in a vault, copy `main.js`, `manifest.json`, and `styles.css` (if presen
 ## How conversion runs
 
 A folder of fifty documents is converted in **one** Python process
-(`python -m markitdown_desktop.cli convert … --out <temp> --json`) rather than fifty, because
+(`python -m foldmark.cli convert … --out <temp> --json`) rather than fifty, because
 starting Python and importing MarkItDown costs about a second each time. The results are then
 imported through Obsidian's vault API so they are indexed and linked immediately.
 

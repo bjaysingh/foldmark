@@ -23,10 +23,10 @@ jobs:
         run: |
           set -euo pipefail
           TAG="${GITHUB_REF_NAME#v}"
-          VERSION="$(python -c "import re,pathlib; print(re.search(r'__version__ = \"([^\"]+)\"', pathlib.Path('markitdown_desktop/__init__.py').read_text()).group(1))")"
+          VERSION="$(python -c "import re,pathlib; print(re.search(r'__version__ = \"([^\"]+)\"', pathlib.Path('foldmark/__init__.py').read_text()).group(1))")"
           echo "tag=$TAG  __version__=$VERSION"
           if [ "$TAG" != "$VERSION" ]; then
-            echo "::error::Tag $TAG does not match markitdown_desktop.__version__ ($VERSION)."
+            echo "::error::Tag $TAG does not match foldmark.__version__ ($VERSION)."
             exit 1
           fi
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
@@ -42,7 +42,7 @@ jobs:
           # LICENSE travels with the archive: MIT requires the notice to be
           # included in every copy, and this archive is what the updater installs.
           cp -R app.py requirements.txt README.md THIRD-PARTY-NOTICES.md LICENSE \
-                hook-tkinterdnd2.py markitdown_desktop "$STAGE"/
+                hook-tkinterdnd2.py foldmark "$STAGE"/
           cp Setup-*.bat Setup-*.command Start-*.bat Start-*.command \
              Build-*.bat Build-*.command "$STAGE"/
           # A fresh checkout carries no __pycache__, so nothing needs pruning here.

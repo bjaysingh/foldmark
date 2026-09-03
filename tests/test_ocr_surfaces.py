@@ -4,7 +4,7 @@ import json
 import tempfile
 import unittest
 
-from markitdown_desktop import cli, settings
+from foldmark import cli, settings
 
 
 class BlankConverter:

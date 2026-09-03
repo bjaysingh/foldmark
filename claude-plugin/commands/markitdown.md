@@ -13,13 +13,13 @@ Steps:
 2. Locate the converter. Try, in order:
    - `$MARKITDOWN_DESKTOP_ROOT`
    - the directory above `${CLAUDE_PLUGIN_ROOT}`
-   Run `python3 -m markitdown_desktop.cli version --json` from that directory to confirm it
+   Run `python3 -m foldmark.cli version --json` from that directory to confirm it
    works. If neither location works, tell the user to set `MARKITDOWN_DESKTOP_ROOT` to their
    checkout of https://github.com/bjaysingh/microsoftmarkitdown and stop.
 3. Convert into a folder next to the sources, or into the folder the user named:
 
    ```
-   python3 -m markitdown_desktop.cli convert <paths> --out <output-folder> --json
+   python3 -m foldmark.cli convert <paths> --out <output-folder> --json
    ```
 
 4. Report each file's outcome from the JSON: what converted, what failed and why, and how

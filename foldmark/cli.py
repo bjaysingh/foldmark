@@ -5,11 +5,11 @@ cannot call a Python library in-process, so both shell out to this module. It
 is a thin shell over ``converter.py`` — the same discovery rules, the same
 collision-safe naming, the same per-file failure isolation as the desktop app.
 
-    python -m markitdown_desktop.cli convert <path>... --out <dir> [--json]
-    python -m markitdown_desktop.cli convert <path> --ocr always --ocr-language deu
-    python -m markitdown_desktop.cli convert <path> --stdout
-    python -m markitdown_desktop.cli extensions --json
-    python -m markitdown_desktop.cli version --json
+    python -m foldmark.cli convert <path>... --out <dir> [--json]
+    python -m foldmark.cli convert <path> --ocr always --ocr-language deu
+    python -m foldmark.cli convert <path> --stdout
+    python -m foldmark.cli extensions --json
+    python -m foldmark.cli version --json
 
 Exit codes: 0 success, 1 at least one file failed, 2 usage error.
 """
@@ -80,7 +80,7 @@ def _bound_parser_class(stderr: TextIO | None):
 def _build_parser(stderr: TextIO | None = None) -> argparse.ArgumentParser:
     parser = _Parser(
         stderr=stderr,
-        prog="markitdown_desktop.cli",
+        prog="foldmark.cli",
         description="Convert documents to Markdown using Microsoft MarkItDown.",
         add_help=True,
     )
@@ -229,7 +229,7 @@ def main(
             "ocr_engine": getattr(engine, "name", None),
         }
         plain = (
-            f"MarkItDown Desktop {payload['app_version']}\n"
+            f"Foldmark {payload['app_version']}\n"
             f"Microsoft MarkItDown {payload['markitdown_version']}\n"
             f"Python {payload['python']}\n"
             f"OCR {payload['ocr_engine'] or 'not available'}"

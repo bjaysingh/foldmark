@@ -53,7 +53,7 @@ def env_float(name: str, fallback: float) -> float:
 
 
 def find_project_root() -> Path | None:
-    """Locate the checkout that provides markitdown_desktop.cli."""
+    """Locate the checkout that provides foldmark.cli."""
     candidates: list[Path] = []
     override = os.environ.get("MARKITDOWN_DESKTOP_ROOT", "").strip()
     if override:
@@ -63,7 +63,7 @@ def find_project_root() -> Path | None:
         candidates.append(Path(plugin_root).parent)
     candidates.extend(Path(__file__).resolve().parents[:4])
     for candidate in candidates:
-        if (candidate / "markitdown_desktop" / "cli.py").is_file():
+        if (candidate / "foldmark" / "cli.py").is_file():
             return candidate
     return None
 
@@ -81,7 +81,7 @@ def find_python(root: Path | None) -> str:
 
 def cache_dir() -> Path:
     base = os.environ.get("CLAUDE_PLUGIN_DATA", "").strip()
-    root = Path(base) if base else Path.home() / ".markitdown_desktop"
+    root = Path(base) if base else Path.home() / ".foldmark"
     path = root / "markitdown-cache"
     path.mkdir(parents=True, exist_ok=True)
     return path
@@ -98,7 +98,7 @@ def convert(source: Path, destination: Path, timeout: float) -> tuple[bool, str]
     root = find_project_root()
     python = find_python(root)
     if root is not None:
-        command = [python, "-m", "markitdown_desktop.cli", "convert", str(source), "--stdout"]
+        command = [python, "-m", "foldmark.cli", "convert", str(source), "--stdout"]
         cwd: str | None = str(root)
     else:
         # No checkout nearby: fall back to MarkItDown's own CLI if it is on PATH.

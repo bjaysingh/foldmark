@@ -5,7 +5,7 @@ import { probeConverter } from "./python";
 export interface MarkItDownSettings {
   /** Explicit interpreter path. Empty means auto-detect. */
   pythonPath: string;
-  /** Checkout of bjaysingh/microsoftmarkitdown providing markitdown_desktop.cli. */
+  /** Checkout of bjaysingh/microsoftmarkitdown providing foldmark.cli. */
   projectRoot: string;
   /** Vault-relative folder that receives converted notes. */
   outputFolder: string;
@@ -46,7 +46,7 @@ export class MarkItDownSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Converter location")
       .setDesc(
-        "Folder containing markitdown_desktop/. Leave empty to search the usual locations. " +
+        "Folder containing foldmark/. Leave empty to search the usual locations. " +
           "This is a checkout of github.com/bjaysingh/microsoftmarkitdown with its setup script run."
       )
       .addText((text) =>

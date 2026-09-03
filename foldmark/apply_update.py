@@ -4,7 +4,7 @@ Run as a separate process *after* the app exits, because a running Python
 process cannot safely have its own package directory replaced underneath it,
 and on Windows the OS refuses to move files the process still holds open.
 
-This module deliberately imports nothing from ``markitdown_desktop``: at the
+This module deliberately imports nothing from ``foldmark``: at the
 moment it runs, that package is exactly what is being swapped out. It is
 copied to ``<root>/.update/apply_update.py`` and executed from there.
 
@@ -22,9 +22,9 @@ import time
 from pathlib import Path
 
 PROTECTED = {".venv", ".update", ".git"}
-REQUIRED_ENTRIES = ("app.py", "requirements.txt", os.path.join("markitdown_desktop", "__init__.py"))
+REQUIRED_ENTRIES = ("app.py", "requirements.txt", os.path.join("foldmark", "__init__.py"))
 PARENT_EXIT_TIMEOUT = 30.0
-SMOKE_CODE = "import markitdown_desktop, sys; sys.stdout.write(markitdown_desktop.__version__)"
+SMOKE_CODE = "import foldmark, sys; sys.stdout.write(foldmark.__version__)"
 
 
 class Runner:

@@ -5,7 +5,7 @@ import tempfile
 import unittest
 import zipfile
 
-from markitdown_desktop import updater
+from foldmark import updater
 
 
 def release(tag: str, assets: list[str] | None = None, body: str = "notes") -> dict:
@@ -37,7 +37,7 @@ def make_zip(path: Path, entries: dict[str, str]) -> Path:
 VALID_TREE = {
     "app.py": "print('hi')\n",
     "requirements.txt": "markitdown[all]==0.1.7\n",
-    "markitdown_desktop/__init__.py": "__version__ = '1.1.0'\n",
+    "foldmark/__init__.py": "__version__ = '1.1.0'\n",
 }
 
 
@@ -102,7 +102,7 @@ class CheckForUpdateTests(unittest.TestCase):
 
     def test_repo_slug_is_used_in_the_request(self) -> None:
         updater.check_for_update("1.0.0", fetch_json=self.fetch(release("v1.1.0")))
-        self.assertIn("bjaysingh/microsoftmarkitdown", self.requested)
+        self.assertIn("bjaysingh/foldmark", self.requested)
 
 
 class ChecksumTests(unittest.TestCase):
@@ -132,7 +132,7 @@ class StagingTests(unittest.TestCase):
             tree = self.stage(VALID_TREE, temp)
             updater.validate_tree(tree)
             self.assertTrue((tree / "app.py").exists())
-            self.assertTrue((tree / "markitdown_desktop" / "__init__.py").exists())
+            self.assertTrue((tree / "foldmark" / "__init__.py").exists())
 
     def test_single_wrapper_directory_is_unwrapped(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

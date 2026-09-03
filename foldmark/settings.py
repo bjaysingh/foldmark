@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-SETTINGS_DIR = Path.home() / ".markitdown_desktop"
+SETTINGS_DIR = Path.home() / ".foldmark"
 SETTINGS_PATH = SETTINGS_DIR / "settings.json"
 
 DEFAULTS: dict[str, Any] = {

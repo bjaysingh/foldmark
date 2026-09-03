@@ -12,21 +12,21 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
-from markitdown_desktop import __version__, settings, theme, updater
-from markitdown_desktop.ocr import (
+from foldmark import __version__, settings, theme, updater
+from foldmark.ocr import (
     OcrFallbackConverter,
     available_engine,
     mode_from_settings,
     usage_summary,
 )
-from markitdown_desktop.converter import (
+from foldmark.converter import (
     ConversionResult,
     MicrosoftMarkItDownConverter,
     SUPPORTED_EXTENSIONS,
     convert_files,
     discover_files,
 )
-from markitdown_desktop.update_ui import (
+from foldmark.update_ui import (
     AboutDialog,
     UpdateAvailableDialog,
     UpdateProgressDialog,
@@ -40,7 +40,7 @@ except ImportError:
     TkinterDnD = None
 
 
-APP_NAME = "MarkItDown"
+APP_NAME = "Foldmark"
 INSTALL_ROOT = Path(__file__).resolve().parent
 HEADLINE_FORMATS = "PDF · Word · Excel · PowerPoint · e-books · email · audio · images"
 
@@ -530,7 +530,7 @@ class App:
 
     def _convert_worker(self, sources: list[Path], output_dir: Path, overwrite: bool) -> None:
         try:
-            from markitdown_desktop import settings as settings_module
+            from foldmark import settings as settings_module
 
             data = settings_module.load()
             mode = mode_from_settings(data)
@@ -814,7 +814,7 @@ class App:
         try:
             work_dir = INSTALL_ROOT / ".update"
             applier = work_dir / "apply_update.py"
-            shutil.copyfile(INSTALL_ROOT / "markitdown_desktop" / "apply_update.py", applier)
+            shutil.copyfile(INSTALL_ROOT / "foldmark" / "apply_update.py", applier)
             pending = {
                 "version": info.version,
                 "previous_version": __version__,

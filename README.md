@@ -84,7 +84,7 @@ and restarts the app on the new version.
 - Checksums prove the download was not corrupted or tampered with in transit. They do not prove
   who wrote it: anyone who controls the GitHub repository controls what your app installs.
 
-**Turning it off:** set `"auto_check": false` in `~/.markitdown_desktop/settings.json`. The
+**Turning it off:** set `"auto_check": false` in `~/.foldmark/settings.json`. The
 **Check for updates…** button still works on demand.
 
 ## Obsidian plugin
@@ -103,10 +103,10 @@ Claude Code reads them, so the model receives text rather than raw bytes. See
 Both plugins — and anything else you want to script — use one entry point:
 
 ```bash
-python -m markitdown_desktop.cli convert report.pdf notes/ --out out/ --json
-python -m markitdown_desktop.cli convert report.pdf --stdout
-python -m markitdown_desktop.cli extensions --json
-python -m markitdown_desktop.cli version --json
+python -m foldmark.cli convert report.pdf notes/ --out out/ --json
+python -m foldmark.cli convert report.pdf --stdout
+python -m foldmark.cli extensions --json
+python -m foldmark.cli version --json
 ```
 
 Exit codes: `0` everything converted, `1` at least one file failed, `2` usage error.
@@ -144,7 +144,7 @@ equation, or layout detail.
 
 ## For maintainers — cutting a release
 
-1. Update `__version__` in `markitdown_desktop/__init__.py`.
+1. Update `__version__` in `foldmark/__init__.py`.
 2. Commit, then tag with a matching `v` prefix: `git tag v1.1.0 && git push --tags`.
 3. `.github/workflows/release.yml` verifies the tag matches `__version__`, runs the tests,
    builds `markitdown-desktop-<version>-source.zip` plus `SHA256SUMS.txt`, publishes the

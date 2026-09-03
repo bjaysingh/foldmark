@@ -133,7 +133,7 @@ class WindowTests(unittest.TestCase):
         self.assertIn("1 file", data["count_label"])
 
     def test_the_ui_states_the_markitdown_dependency_with_working_links(self) -> None:
-        from markitdown_desktop import updater
+        from foldmark import updater
 
         data = self.check()
         self.assertTrue(data["links"], "the UI must name Microsoft MarkItDown on screen")
