@@ -55,7 +55,7 @@ def env_float(name: str, fallback: float) -> float:
 def find_project_root() -> Path | None:
     """Locate the checkout that provides foldmark.cli."""
     candidates: list[Path] = []
-    override = os.environ.get("MARKITDOWN_DESKTOP_ROOT", "").strip()
+    override = os.environ.get("FOLDMARK_ROOT", "").strip()
     if override:
         candidates.append(Path(override).expanduser())
     plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT", "").strip()
@@ -82,7 +82,7 @@ def find_python(root: Path | None) -> str:
 def cache_dir() -> Path:
     base = os.environ.get("CLAUDE_PLUGIN_DATA", "").strip()
     root = Path(base) if base else Path.home() / ".foldmark"
-    path = root / "markitdown-cache"
+    path = root / "foldmark-cache"
     path.mkdir(parents=True, exist_ok=True)
     return path
 

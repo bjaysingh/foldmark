@@ -15,9 +15,9 @@ import tempfile
 import unittest
 import zipfile
 
-HOOK_PATH = Path(__file__).resolve().parents[1] / "claude-plugin" / "hooks" / "markitdown_read_hook.py"
+HOOK_PATH = Path(__file__).resolve().parents[1] / "claude-plugin" / "hooks" / "foldmark_read_hook.py"
 
-spec = importlib.util.spec_from_file_location("markitdown_read_hook", HOOK_PATH)
+spec = importlib.util.spec_from_file_location("foldmark_read_hook", HOOK_PATH)
 hook = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(hook)
 

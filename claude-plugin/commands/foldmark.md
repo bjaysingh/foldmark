@@ -11,11 +11,11 @@ Steps:
 
 1. If `$ARGUMENTS` is empty, ask which file or folder to convert and stop.
 2. Locate the converter. Try, in order:
-   - `$MARKITDOWN_DESKTOP_ROOT`
+   - `$FOLDMARK_ROOT`
    - the directory above `${CLAUDE_PLUGIN_ROOT}`
    Run `python3 -m foldmark.cli version --json` from that directory to confirm it
-   works. If neither location works, tell the user to set `MARKITDOWN_DESKTOP_ROOT` to their
-   checkout of https://github.com/bjaysingh/microsoftmarkitdown and stop.
+   works. If neither location works, tell the user to set `FOLDMARK_ROOT` to their
+   checkout of https://github.com/bjaysingh/foldmark and stop.
 3. Convert into a folder next to the sources, or into the folder the user named:
 
    ```
