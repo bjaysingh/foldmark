@@ -22,7 +22,7 @@ export default class MarkItDownPlugin extends Plugin {
     await this.loadSettings();
     this.addSettingTab(new MarkItDownSettingTab(this.app, this));
 
-    this.addRibbonIcon("file-text", "Convert to Markdown with MarkItDown", () => {
+    this.addRibbonIcon("file-text", "Convert to Markdown with Foldmark", () => {
       void this.convertActiveFile();
     });
 
@@ -44,7 +44,7 @@ export default class MarkItDownPlugin extends Plugin {
         if (!isFolder && !(file instanceof TFile)) return;
         menu.addItem((item) =>
           item
-            .setTitle(isFolder ? "Convert folder with MarkItDown" : "Convert with MarkItDown")
+            .setTitle(isFolder ? "Convert folder with Foldmark" : "Convert with Foldmark")
             .setIcon("file-text")
             .onClick(() => void this.convertVaultPaths([file])),
         );
@@ -91,16 +91,16 @@ export default class MarkItDownPlugin extends Plugin {
       .map((file) => this.absolutePath(file))
       .filter((value): value is string => value !== null);
     if (sources.length === 0) {
-      new Notice("This vault is not stored on disk, so MarkItDown cannot read its files.");
+      new Notice("This vault is not stored on disk, so Foldmark cannot read its files.");
       return;
     }
 
-    const notice = new Notice("MarkItDown: converting…", 0);
+    const notice = new Notice("Foldmark: converting…", 0);
     const { records, skipped, tempDir, error } = await convertToTempDir(this.settings, sources);
     try {
       if (error) {
         notice.hide();
-        new Notice(`MarkItDown: ${error}`, 10000);
+        new Notice(`Foldmark: ${error}`, 10000);
         return;
       }
       const created = await this.importResults(records);
@@ -161,13 +161,13 @@ export default class MarkItDownPlugin extends Plugin {
   private report(records: ConversionRecord[], skipped: string[], created: TFile[]): void {
     const failed = records.filter((record) => !record.ok);
     if (records.length === 0) {
-      new Notice("MarkItDown: no supported files were found.", 6000);
+      new Notice("Foldmark: no supported files were found.", 6000);
       return;
     }
     const parts = [`${created.length} note${created.length === 1 ? "" : "s"} created`];
     if (failed.length > 0) parts.push(`${failed.length} failed`);
     if (skipped.length > 0) parts.push(`${skipped.length} unsupported skipped`);
-    new Notice(`MarkItDown: ${parts.join(" · ")}`, failed.length > 0 ? 10000 : 5000);
+    new Notice(`Foldmark: ${parts.join(" · ")}`, failed.length > 0 ? 10000 : 5000);
 
     if (failed.length > 0) {
       const detail = failed

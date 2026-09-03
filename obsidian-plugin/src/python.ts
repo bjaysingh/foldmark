@@ -36,12 +36,12 @@ const IS_WINDOWS = process.platform === "win32";
 function candidateRoots(settings: MarkItDownSettings): string[] {
   const roots: string[] = [];
   if (settings.projectRoot) roots.push(settings.projectRoot);
-  const env = process.env.MARKITDOWN_DESKTOP_ROOT;
+  const env = process.env.FOLDMARK_ROOT;
   if (env) roots.push(env);
   const home = os.homedir();
   roots.push(
-    path.join(home, "microsoftmarkitdown"),
-    path.join(home, "Documents", "microsoftmarkitdown"),
+    path.join(home, "foldmark"),
+    path.join(home, "Documents", "foldmark"),
     path.join(home, "Claude", "Projects", "MicrosoftMarkItDown")
   );
   return roots;
@@ -114,7 +114,7 @@ async function runCli(
         code: 127,
         stdout: "",
         stderr:
-          "Could not find a checkout of microsoftmarkitdown. Set the converter location in settings.",
+          "Could not find a checkout of Foldmark. Set the converter location in settings.",
       },
       interpreter: interpreter.join(" "),
       root,

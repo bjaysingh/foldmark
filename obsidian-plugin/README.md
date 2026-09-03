@@ -1,4 +1,4 @@
-# MarkItDown for Obsidian
+# Foldmark for Obsidian
 
 Converts PDFs, Word, PowerPoint, Excel, e-books, email, and audio into Markdown notes in your
 vault, using [Microsoft MarkItDown](https://github.com/microsoft/markitdown).
@@ -7,17 +7,17 @@ Desktop only — the plugin runs a local Python process, which Obsidian mobile c
 
 ## Requirements
 
-A checkout of [bjaysingh/microsoftmarkitdown](https://github.com/bjaysingh/microsoftmarkitdown)
+A checkout of [bjaysingh/foldmark](https://github.com/bjaysingh/foldmark)
 with its setup script run (`Setup-macOS.command` or `Setup-Windows.bat`). That provides both
 Python and Microsoft MarkItDown.
 
 The plugin looks for it in this order:
 
 1. The **Converter location** set in plugin settings
-2. `$MARKITDOWN_DESKTOP_ROOT`
-3. `~/microsoftmarkitdown`, `~/Documents/microsoftmarkitdown`, `~/Claude/Projects/MicrosoftMarkItDown`
+2. `$FOLDMARK_ROOT`
+3. `~/foldmark`, `~/Documents/foldmark`, `~/Claude/Projects/MicrosoftMarkItDown`
 
-Use **Settings → MarkItDown → Test setup** to confirm it works. That button reports the
+Use **Settings → Foldmark → Test setup** to confirm it works. That button reports the
 interpreter, the Python version, and the installed MarkItDown version, so a misconfiguration
 shows up during setup rather than at conversion time.
 
@@ -25,7 +25,7 @@ shows up during setup rather than at conversion time.
 
 - **Ribbon icon** or **Convert the current file to Markdown** — converts the active file
 - **Convert every supported file in a folder** — converts the active file's folder
-- **Right-click a file or folder** in the file explorer → *Convert with MarkItDown*
+- **Right-click a file or folder** in the file explorer → *Convert with Foldmark*
 
 Converted notes land in the vault folder named in settings (default `MarkItDown`). Existing
 notes are never overwritten: a name clash becomes `-2`, `-3`, and so on, matching the desktop
@@ -50,7 +50,7 @@ npm run build   # type-check, then a minified bundle
 ```
 
 To test in a vault, copy `main.js`, `manifest.json`, and `styles.css` (if present) into
-`<vault>/.obsidian/plugins/markitdown/`.
+`<vault>/.obsidian/plugins/foldmark/`.
 
 ## How conversion runs
 

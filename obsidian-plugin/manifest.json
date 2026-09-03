@@ -1,10 +1,10 @@
 {
-  "id": "markitdown",
-  "name": "MarkItDown",
+  "id": "foldmark",
+  "name": "Foldmark",
   "version": "1.0.3",
   "minAppVersion": "1.5.0",
   "description": "Convert PDFs, Office documents, e-books, email and audio into Markdown notes using Microsoft MarkItDown.",
   "author": "bjaysingh",
-  "authorUrl": "https://github.com/bjaysingh/microsoftmarkitdown",
+  "authorUrl": "https://github.com/bjaysingh/foldmark",
   "isDesktopOnly": true
 }
