@@ -91,8 +91,19 @@ The rename is complete when all of the following pass:
 4. `claude plugin validate ./claude-plugin` passes.
 5. A real conversion through the renamed CLI, including OCR on an image.
 6. The GUI launches and the window title reads "Foldmark".
-7. **Grep audit.** Zero hits for `markitdown_desktop`, `MarkItDown Desktop` or
-   `microsoftmarkitdown`; the count of `Microsoft MarkItDown` is still **exactly 28**.
+7. **Grep audit**, run with this exact scope:
+
+   ```bash
+   AUDIT=(--exclude-dir=.git --exclude-dir=.venv --exclude-dir=node_modules
+          --exclude-dir=build --exclude-dir=specs)
+   grep -ril "${AUDIT[@]}" -e markitdown_desktop -e "MarkItDown Desktop" \
+        -e microsoftmarkitdown .          # must print nothing
+   grep -rio "${AUDIT[@]}" "Microsoft MarkItDown" . | wc -l   # must print 28
+   ```
+
+   The `specs` exclusion is required, not a convenience: this design document necessarily
+   contains every string the audit forbids, because describing a rename means naming both
+   sides of it. Without the exclusion the audit can never pass.
 
 Item 7 is the acceptance test that distinguishes this from a careless bulk replace. The
 attribution count holding steady is the evidence that categories 2 and 3 above survived.
