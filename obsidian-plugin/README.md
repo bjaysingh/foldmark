@@ -27,7 +27,7 @@ shows up during setup rather than at conversion time.
 - **Convert every supported file in a folder** — converts the active file's folder
 - **Right-click a file or folder** in the file explorer → *Convert with Foldmark*
 
-Converted notes land in the vault folder named in settings (default `MarkItDown`). Existing
+Converted notes land in the vault folder named in settings (default `Foldmark`). Existing
 notes are never overwritten: a name clash becomes `-2`, `-3`, and so on, matching the desktop
 app's behaviour.
 
@@ -37,7 +37,7 @@ app's behaviour.
 |---|---|---|
 | Converter location | auto-detect | Folder containing `foldmark/` |
 | Python interpreter | auto-detect | Overrides the converter's own `.venv` |
-| Output folder | `MarkItDown` | Vault-relative destination for converted notes |
+| Output folder | `Foldmark` | Vault-relative destination for converted notes |
 | Open the note after converting | on | Opens the first result |
 | Conversion timeout | 300s | Limit for one batch |
 

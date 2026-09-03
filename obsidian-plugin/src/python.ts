@@ -2,7 +2,7 @@ import { spawn } from "child_process";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-import type { MarkItDownSettings } from "./settings";
+import type { FoldmarkSettings } from "./settings";
 
 export interface CliResult {
   code: number;
@@ -33,7 +33,7 @@ const IS_WINDOWS = process.platform === "win32";
  * The plugin lives inside the vault, so it cannot assume any fixed relationship
  * to the converter; the configured path wins, then the conventional locations.
  */
-function candidateRoots(settings: MarkItDownSettings): string[] {
+function candidateRoots(settings: FoldmarkSettings): string[] {
   const roots: string[] = [];
   if (settings.projectRoot) roots.push(settings.projectRoot);
   const env = process.env.FOLDMARK_ROOT;
@@ -47,7 +47,7 @@ function candidateRoots(settings: MarkItDownSettings): string[] {
   return roots;
 }
 
-export function resolveProjectRoot(settings: MarkItDownSettings): string | null {
+export function resolveProjectRoot(settings: FoldmarkSettings): string | null {
   for (const root of candidateRoots(settings)) {
     try {
       if (fs.existsSync(path.join(root, "foldmark", "cli.py"))) return root;
@@ -58,7 +58,7 @@ export function resolveProjectRoot(settings: MarkItDownSettings): string | null 
   return null;
 }
 
-export function resolveInterpreter(settings: MarkItDownSettings, root: string | null): string[] {
+export function resolveInterpreter(settings: FoldmarkSettings, root: string | null): string[] {
   if (settings.pythonPath) return [settings.pythonPath];
   if (root) {
     const venv = IS_WINDOWS
@@ -102,7 +102,7 @@ function run(command: string[], cwd: string | undefined, timeoutMs: number): Pro
 }
 
 async function runCli(
-  settings: MarkItDownSettings,
+  settings: FoldmarkSettings,
   args: string[],
   timeoutMs: number
 ): Promise<{ result: CliResult; interpreter: string; root: string | null }> {
@@ -125,7 +125,7 @@ async function runCli(
   return { result, interpreter: interpreter.join(" "), root };
 }
 
-export async function probeConverter(settings: MarkItDownSettings): Promise<ProbeResult> {
+export async function probeConverter(settings: FoldmarkSettings): Promise<ProbeResult> {
   const { result, interpreter } = await runCli(settings, ["version", "--json"], 30000);
   if (result.code !== 0) {
     return {
@@ -175,7 +175,7 @@ export async function probeConverter(settings: MarkItDownSettings): Promise<Prob
  * then imports the results through the vault API so Obsidian indexes them.
  */
 export async function convertToTempDir(
-  settings: MarkItDownSettings,
+  settings: FoldmarkSettings,
   sources: string[]
 ): Promise<{ records: ConversionRecord[]; skipped: string[]; tempDir: string; error?: string }> {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "markitdown-"));

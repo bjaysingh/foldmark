@@ -1,8 +1,8 @@
 import { App, PluginSettingTab, Setting, Notice } from "obsidian";
-import type MarkItDownPlugin from "./main";
+import type FoldmarkPlugin from "./main";
 import { probeConverter } from "./python";
 
-export interface MarkItDownSettings {
+export interface FoldmarkSettings {
   /** Explicit interpreter path. Empty means auto-detect. */
   pythonPath: string;
   /** Checkout of bjaysingh/foldmark providing foldmark.cli. */
@@ -15,16 +15,16 @@ export interface MarkItDownSettings {
   timeoutSeconds: number;
 }
 
-export const DEFAULT_SETTINGS: MarkItDownSettings = {
+export const DEFAULT_SETTINGS: FoldmarkSettings = {
   pythonPath: "",
   projectRoot: "",
-  outputFolder: "MarkItDown",
+  outputFolder: "Foldmark",
   openAfterConvert: true,
   timeoutSeconds: 300,
 };
 
-export class MarkItDownSettingTab extends PluginSettingTab {
-  constructor(app: App, private plugin: MarkItDownPlugin) {
+export class FoldmarkSettingTab extends PluginSettingTab {
+  constructor(app: App, private plugin: FoldmarkPlugin) {
     super(app, plugin);
   }
 
@@ -79,7 +79,7 @@ export class MarkItDownSettingTab extends PluginSettingTab {
       .setDesc("Vault-relative folder for converted notes. It is created if missing.")
       .addText((text) =>
         text
-          .setPlaceholder("MarkItDown")
+          .setPlaceholder("Foldmark")
           .setValue(this.plugin.settings.outputFolder)
           .onChange(async (value) => {
             this.plugin.settings.outputFolder = value.trim() || DEFAULT_SETTINGS.outputFolder;
@@ -126,10 +126,10 @@ export class MarkItDownSettingTab extends PluginSettingTab {
                 `Ready. Python ${result.python}, MarkItDown ${result.markitdownVersion}, ` +
                   `using ${result.interpreter}`
               );
-              new Notice("MarkItDown is ready.");
+              new Notice("Foldmark is ready.");
             } else {
               status.setText(`Not working: ${result.message}`);
-              new Notice(`MarkItDown setup problem: ${result.message}`, 8000);
+              new Notice(`Foldmark setup problem: ${result.message}`, 8000);
             }
           })
       );

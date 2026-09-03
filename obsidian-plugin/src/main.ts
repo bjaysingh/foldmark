@@ -10,17 +10,17 @@ import * as fs from "fs";
 import * as path from "path";
 import {
   DEFAULT_SETTINGS,
-  MarkItDownSettingTab,
-  type MarkItDownSettings,
+  FoldmarkSettingTab,
+  type FoldmarkSettings,
 } from "./settings";
 import { cleanupTempDir, convertToTempDir, type ConversionRecord } from "./python";
 
-export default class MarkItDownPlugin extends Plugin {
-  settings: MarkItDownSettings = DEFAULT_SETTINGS;
+export default class FoldmarkPlugin extends Plugin {
+  settings: FoldmarkSettings = DEFAULT_SETTINGS;
 
   async onload(): Promise<void> {
     await this.loadSettings();
-    this.addSettingTab(new MarkItDownSettingTab(this.app, this));
+    this.addSettingTab(new FoldmarkSettingTab(this.app, this));
 
     this.addRibbonIcon("file-text", "Convert to Markdown with Foldmark", () => {
       void this.convertActiveFile();
