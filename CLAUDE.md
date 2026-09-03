@@ -105,7 +105,7 @@ reports every child as unmapped, which makes layout assertions silently vacuous.
    `obsidian-plugin/versions.json` and `claude-plugin/.claude-plugin/plugin.json`.
 2. Commit, then `git tag vX.Y.Z && git push origin main --tags`.
 
-The workflow runs the tests, builds `markitdown-desktop-<version>-source.zip` plus
+The workflow runs the tests, builds `foldmark-<version>-source.zip` plus
 `SHA256SUMS.txt` (the exact format `updater.parse_checksums` consumes), publishes the release
 and attaches the Obsidian plugin build. `LICENSE` must stay in the archive: MIT requires the
 notice to accompany every copy, and that archive is what the updater installs.

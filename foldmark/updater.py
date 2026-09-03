@@ -36,7 +36,7 @@ NETWORK_TIMEOUT = 5.0
 DOWNLOAD_TIMEOUT = 60.0
 USER_AGENT = "MarkItDown-Desktop-Updater"
 
-ASSET_PREFIX = "markitdown-desktop-"
+ASSET_PREFIX = "foldmark-"
 ASSET_SUFFIX = "-source.zip"
 CHECKSUMS_NAME = "SHA256SUMS.txt"
 
