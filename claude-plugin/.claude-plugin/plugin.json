@@ -1,6 +1,6 @@
 {
   "name": "foldmark",
-  "displayName": "MarkItDown",
+  "displayName": "Foldmark",
   "version": "1.0.3",
   "description": "Converts PDFs, Office documents, e-books, email, and audio to Markdown with Microsoft MarkItDown before Claude reads them.",
   "homepage": "https://github.com/bjaysingh/foldmark",

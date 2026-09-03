@@ -1,4 +1,4 @@
-# MarkItDown plugin for Claude Code
+# Foldmark plugin for Claude Code
 
 Converts documents Claude cannot read as text — PDFs, Word, PowerPoint, Excel, e-books,
 email, and audio — into Markdown with [Microsoft MarkItDown](https://github.com/microsoft/markitdown),
