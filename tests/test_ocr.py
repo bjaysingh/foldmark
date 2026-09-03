@@ -43,6 +43,17 @@ class FakeEngine:
         return self.text
 
 
+try:
+    import pypdfium2 as _pypdfium2
+except ImportError:  # pragma: no cover - depends on what is installed
+    _pypdfium2 = None
+
+# pypdfium2 arrives with MarkItDown, via pdfplumber. CI deliberately runs this
+# suite against a bare interpreter with MarkItDown absent, so anything needing a
+# real PDF has to stand aside there rather than error.
+needs_pypdfium2 = unittest.skipIf(_pypdfium2 is None, "pypdfium2 is not installed")
+
+
 def _file(root: Path, name: str) -> Path:
     path = root / name
     path.write_bytes(b"not a real document")
@@ -174,9 +185,7 @@ class PdfRoutingTests(unittest.TestCase):
 
 def _real_pdf(path: Path, pages: int) -> Path:
     """A genuine blank PDF of ``pages`` pages, built with the library already installed."""
-    import pypdfium2
-
-    document = pypdfium2.PdfDocument.new()
+    document = _pypdfium2.PdfDocument.new()
     for _ in range(pages):
         document.new_page(200, 200)
     document.save(str(path))
@@ -200,6 +209,7 @@ class PageEngine:
 
 
 class OcrPdfTests(unittest.TestCase):
+    @needs_pypdfium2
     def test_each_page_is_ocred_and_marked_in_order(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             source = _real_pdf(Path(temp) / "scan.pdf", 3)
@@ -211,6 +221,7 @@ class OcrPdfTests(unittest.TestCase):
             self.assertLess(markdown.index("FIRST"), markdown.index("SECOND"))
             self.assertLess(markdown.index("SECOND"), markdown.index("THIRD"))
 
+    @needs_pypdfium2
     def test_max_pages_caps_the_work(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             source = _real_pdf(Path(temp) / "long.pdf", 5)
@@ -220,6 +231,7 @@ class OcrPdfTests(unittest.TestCase):
             self.assertIn("C", "ABCDE")
             self.assertNotIn("<!-- Page number: 3 -->", markdown)
 
+    @needs_pypdfium2
     def test_pages_with_no_recognised_text_are_omitted(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             source = _real_pdf(Path(temp) / "mixed.pdf", 3)
@@ -330,6 +342,7 @@ class UsageReportingTests(unittest.TestCase):
             self.assertEqual(0, wrapper.last_pages)
             self.assertIsNone(wrapper.last_engine_used)
 
+    @needs_pypdfium2
     def test_a_scanned_pdf_counts_every_page_it_recovered(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             source = _real_pdf(Path(temp) / "scan.pdf", 3)
