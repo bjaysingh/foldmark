@@ -1,6 +1,6 @@
 {
   "name": "obsidian-markitdown",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Obsidian plugin that converts documents to Markdown with Microsoft MarkItDown.",
   "main": "main.js",
   "private": true,

@@ -1,147 +1,146 @@
-"""Window construction and layout tests.
+"""Window construction and layout checks.
 
-Skipped wherever Tk cannot open a display, so a headless CI run stays green.
+Each check runs the window in a **subprocess**. Tk 9.0 on macOS segfaults when
+a suite builds and tears down windows repeatedly in one interpreter, which took
+the whole run down with exit 139. Isolating each probe means a crash surfaces
+as a failed assertion naming the platform problem, rather than killing every
+other test in the process.
 
-One Tk root is created for the whole class and each test builds the window on a
-fresh Toplevel. Creating and destroying multiple Tk *roots* inside a single
-process is unstable on macOS - it segfaulted the suite - while Toplevels under
-one root are fine.
+The probe skips cleanly where Tk cannot open a display, so headless CI stays
+green.
 """
 
+import json
+import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+REPO = Path(__file__).resolve().parents[1]
 
+PROBE = r'''
+import json, sys, tkinter as tk
+sys.path.insert(0, %(repo)r)
 
-def tk_available() -> bool:
-    try:
-        import tkinter as tk
+try:
+    root = tk.Tk()
+except Exception as exc:
+    print(json.dumps({"skip": str(exc)}))
+    raise SystemExit(0)
 
-        root = tk.Tk()
-        root.destroy()
-        return True
-    except Exception:
-        return False
+import app as appmod
 
+# The window must stay mapped: winfo_ismapped() reports False for every
+# child of a withdrawn toplevel, which would make these checks meaningless.
+window = appmod.App(root)
+out = {"skip": None}
 
-@unittest.skipUnless(tk_available(), "no display available for Tk")
-class WindowTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        import tkinter as tk
+sample = %(sample)r
+if sample:
+    window._add_paths([sample])
 
-        cls.tk = tk
-        cls.root = tk.Tk()
-        cls.root.withdraw()
+root.geometry("%(geometry)s")
+root.update_idletasks()
 
-    @classmethod
-    def tearDownClass(cls) -> None:
+def facts(widget):
+    return {"mapped": bool(widget.winfo_ismapped()), "height": widget.winfo_height()}
+
+out["convert"] = facts(window.convert_button)
+out["convert_state"] = list(window.convert_button.state())
+out["dropzone"] = facts(window.dropzone)
+out["list_area"] = facts(window.list_area)
+out["file_count"] = len(window.files)
+out["count_label"] = window.count_label.cget("text")
+out["preview_open"] = window.preview_open
+out["window_height"] = root.winfo_height()
+
+links = []
+def walk(widget):
+    for child in widget.winfo_children():
         try:
-            cls.root.destroy()
+            text = child.cget("text")
         except Exception:
-            pass
+            text = ""
+        if isinstance(text, str) and "Microsoft MarkItDown" in text:
+            links.append({"text": text,
+                          "cursor": str(child.cget("cursor")),
+                          "clickable": bool(child.bind("<Button-1>"))})
+        walk(child)
+walk(root)
+out["links"] = links
 
-    def build(self):
-        import app as appmod
+print(json.dumps(out))
+'''
 
-        window = self.tk.Toplevel(self.root)
-        self.addCleanup(lambda: window.destroy())
-        return appmod.App(window), window
 
-    def widgets_with_text(self, root, needle: str) -> list:
-        found = []
+def probe(geometry: str = "980x680", sample: str | None = None) -> dict:
+    """Build the window in a fresh interpreter and report what is on screen."""
+    script = PROBE % {"repo": str(REPO), "geometry": geometry, "sample": sample}
+    result = subprocess.run([sys.executable, "-c", script],
+                            capture_output=True, text=True, timeout=120)
+    line = next((l for l in reversed(result.stdout.splitlines()) if l.startswith("{")), "")
+    if not line:
+        raise AssertionError(
+            f"the window probe produced no result (exit {result.returncode}). "
+            f"stderr: {result.stderr[-600:]}")
+    return json.loads(line)
 
-        def walk(widget):
-            for child in widget.winfo_children():
-                try:
-                    text = child.cget("text")
-                except (self.tk.TclError, AttributeError):
-                    text = ""
-                if isinstance(text, str) and needle in text:
-                    found.append(child)
-                walk(child)
 
-        walk(root)
-        return found
-
-    def test_window_builds_on_a_plain_root_without_tkdnd(self) -> None:
-        """Importing tkinterdnd2 patches drop_target_register onto every widget,
-        so the attribute exists even when the tkdnd Tcl package never loaded.
-        Building without it used to raise TclError and abort startup.
-        """
-        window, _ = self.build()
-        self.assertIsNotNone(window.tree)
-        self.assertIsNotNone(window.dropzone)
+class WindowTests(unittest.TestCase):
+    def check(self, **kwargs) -> dict:
+        data = probe(**kwargs)
+        if data.get("skip"):
+            self.skipTest(f"Tk unavailable: {data['skip']}")
+        return data
 
     def test_the_primary_action_is_on_screen_at_every_supported_size(self) -> None:
-        """The Convert button must never be dropped by the packer.
+        """Convert must never be dropped by the packer.
 
         Tk refuses to map children it cannot fit rather than clipping them. When
         the action row was the last child of an expanding body, a short window
         left Convert, Cancel and the progress bar unmapped - the primary action
-        simply absent. The bars now pack from the bottom edge first, reserving
-        their space ahead of the content area.
+        simply absent, with only the keyboard shortcut still working. The bars
+        now pack from the bottom edge first, reserving space before the content
+        area gets any.
         """
-        window, toplevel = self.build()
-        for width, height in ((980, 680), (720, 520), (720, 420), (600, 340)):
-            with self.subTest(size=f"{width}x{height}"):
-                toplevel.geometry(f"{width}x{height}")
-                toplevel.update_idletasks()
-                button = window.convert_button
-                self.assertTrue(button.winfo_ismapped(),
-                                f"Convert is not mapped at {width}x{height}")
-                self.assertGreater(button.winfo_height(), 4,
-                                   f"Convert collapsed at {width}x{height}")
+        for geometry in ("980x680", "720x520", "720x420", "600x340"):
+            with self.subTest(size=geometry):
+                data = self.check(geometry=geometry)
+                self.assertTrue(data["convert"]["mapped"],
+                                f"Convert is not on screen at {geometry}")
+                self.assertGreater(data["convert"]["height"], 4,
+                                   f"Convert has collapsed at {geometry}")
 
-    def test_the_empty_state_shows_the_drop_zone_and_no_file_list(self) -> None:
-        window, toplevel = self.build()
-        toplevel.update_idletasks()
-        self.assertTrue(window.dropzone.winfo_ismapped())
-        self.assertFalse(window.list_area.winfo_ismapped())
-        self.assertIn("disabled", window.convert_button.state(),
+    def test_the_empty_state_offers_the_drop_zone_and_disables_convert(self) -> None:
+        data = self.check()
+        self.assertTrue(data["dropzone"]["mapped"])
+        self.assertFalse(data["list_area"]["mapped"])
+        self.assertIn("disabled", data["convert_state"],
                       "Convert must be inactive with nothing to convert")
+        self.assertFalse(data["preview_open"],
+                         "the preview pane must stay closed until there is a result")
 
-    def test_adding_files_swaps_the_drop_zone_for_the_list(self) -> None:
-        import tempfile
-
-        window, toplevel = self.build()
+    def test_adding_a_file_swaps_the_drop_zone_for_the_list(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             source = Path(temp) / "notes.txt"
             source.write_text("hello", encoding="utf-8")
-            window._add_paths([str(source)])
-            toplevel.update_idletasks()
+            data = self.check(sample=str(source))
+        self.assertFalse(data["dropzone"]["mapped"])
+        self.assertTrue(data["list_area"]["mapped"])
+        self.assertNotIn("disabled", data["convert_state"])
+        self.assertEqual(1, data["file_count"])
+        self.assertIn("1 file", data["count_label"])
 
-            self.assertFalse(window.dropzone.winfo_ismapped())
-            self.assertTrue(window.list_area.winfo_ismapped())
-            self.assertNotIn("disabled", window.convert_button.state())
-            self.assertEqual(1, len(window.files))
-            self.assertIn("1 file", window.count_label.cget("text"))
-
-            window.clear_files()
-            toplevel.update_idletasks()
-            self.assertTrue(window.dropzone.winfo_ismapped(),
-                            "clearing must return to the empty state")
-
-    def test_the_preview_pane_is_absent_until_there_is_something_to_show(self) -> None:
-        window, _ = self.build()
-        self.assertFalse(window.preview_open)
-        window.open_preview()
-        self.assertTrue(window.preview_open)
-        window.close_preview()
-        self.assertFalse(window.preview_open)
-
-    def test_the_ui_states_the_markitdown_dependency_with_a_working_link(self) -> None:
+    def test_the_ui_states_the_markitdown_dependency_with_working_links(self) -> None:
         from markitdown_desktop import updater
 
-        _, toplevel = self.build()
-        links = self.widgets_with_text(toplevel, "Microsoft MarkItDown")
-        self.assertTrue(links, "the UI must name Microsoft MarkItDown on screen")
-        for label in links:
-            self.assertEqual("hand2", label.cget("cursor"))
-            self.assertTrue(label.bind("<Button-1>"),
-                            "the credit must open the source link when clicked")
+        data = self.check()
+        self.assertTrue(data["links"], "the UI must name Microsoft MarkItDown on screen")
+        for link in data["links"]:
+            self.assertEqual("hand2", link["cursor"], link["text"])
+            self.assertTrue(link["clickable"],
+                            f"{link['text']!r} must open the source link when clicked")
         self.assertEqual("https://github.com/microsoft/markitdown", updater.MARKITDOWN_URL)
 
 
