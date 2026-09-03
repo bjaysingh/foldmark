@@ -49,9 +49,19 @@ automatically — and must not be reimplemented in either plugin.
 
 Two protocols carry this. `converter.py` takes a `Converter`, so tests inject `FakeConverter`
 and never invoke MarkItDown. `updater.check_for_update` takes a `fetch_json` callable, so the
-entire update path is exercised with no network. Follow this pattern for anything new that
-touches the outside world; the suite must stay runnable with no network and no MarkItDown
-installed.
+entire update path is exercised with no network. `ocr.py` takes an `OcrEngine`, so tests inject
+a fake and never call Vision or Tesseract. Follow this pattern for anything new that touches
+the outside world; the suite must stay runnable with no network and no MarkItDown installed.
+
+`release.yml` runs `unittest discover` against a **bare interpreter with nothing pip-installed**,
+so this is enforced on every tag. The trap is transitive dependencies: `pypdfium2` and
+`pdfplumber` are always importable locally because MarkItDown brings them, and a test that
+imports one directly passes here and errors in CI. This took down a release. Guard such a test
+with `unittest.skipIf`, and check new tests the way CI will see them:
+
+```bash
+python3 -m venv /tmp/bare && /tmp/bare/bin/python -m unittest discover -s tests -t .
+```
 
 ### Updates run as two processes
 
