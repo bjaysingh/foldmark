@@ -147,7 +147,18 @@ sed -i '' 's/markitdown_read_hook/foldmark_read_hook/g' claude-plugin/hooks/hook
 grep -n "foldmark_read_hook" claude-plugin/hooks/hooks.json   # expect one hit
 ```
 
-- [ ] **Step 4: Rename the plugin identity and the cache directory**
+- [ ] **Step 4: Rename the environment-variable override**
+
+`MARKITDOWN_DESKTOP_ROOT` lets a user point the plugin at a checkout. It becomes
+`FOLDMARK_ROOT`. Clean break: no fallback to the old name.
+
+```bash
+sed -i '' 's/MARKITDOWN_DESKTOP_ROOT/FOLDMARK_ROOT/g' \
+  claude-plugin/hooks/foldmark_read_hook.py claude-plugin/README.md claude-plugin/commands/foldmark.md
+grep -rn "MARKITDOWN_DESKTOP_ROOT" claude-plugin/ || echo "none left in claude-plugin"
+```
+
+- [ ] **Step 5: Rename the plugin identity and the cache directory**
 
 ```bash
 sed -i '' 's/"name": "markitdown"/"name": "foldmark"/' claude-plugin/.claude-plugin/plugin.json
@@ -156,7 +167,7 @@ sed -i '' 's|"markitdown-cache"|"foldmark-cache"|; s|/ "markitdown-cache"|/ "fol
 sed -i '' 's|markitdown-cache|foldmark-cache|g' claude-plugin/hooks/foldmark_read_hook.py
 ```
 
-- [ ] **Step 5: Verify the Microsoft binary lookup survived**
+- [ ] **Step 6: Verify the Microsoft binary lookup survived**
 
 This is the trap in this task. Line ~105 resolves Microsoft's own `markitdown` executable as a fallback and must be untouched.
 
@@ -166,7 +177,7 @@ grep -n 'shutil.which("markitdown")' claude-plugin/hooks/foldmark_read_hook.py
 
 Expected: exactly one hit, unchanged. If this is now `which("foldmark")`, revert that line.
 
-- [ ] **Step 6: Run the tests and validate the plugin**
+- [ ] **Step 7: Run the tests and validate the plugin**
 
 ```bash
 .venv/bin/python -m unittest tests.test_read_hook 2>&1 | tail -3
@@ -175,7 +186,7 @@ claude plugin validate ./claude-plugin
 
 Expected: tests OK; `✔ Validation passed`.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add -A
@@ -213,6 +224,16 @@ sed -i '' 's|bjaysingh/microsoftmarkitdown|bjaysingh/foldmark|g' \
   obsidian-plugin/src/python.ts obsidian-plugin/src/settings.ts obsidian-plugin/README.md
 sed -i '' 's|Could not find a checkout of microsoftmarkitdown|Could not find a checkout of Foldmark|' \
   obsidian-plugin/src/python.ts
+```
+
+- [ ] **Step 2b: Rename the environment-variable override**
+
+Same variable as Task 2, on the TypeScript side. `python.ts:39` reads it; the README documents it.
+
+```bash
+sed -i '' 's/MARKITDOWN_DESKTOP_ROOT/FOLDMARK_ROOT/g' \
+  obsidian-plugin/src/python.ts obsidian-plugin/README.md
+grep -rn "MARKITDOWN_DESKTOP_ROOT" obsidian-plugin/ || echo "none left in obsidian-plugin"
 ```
 
 - [ ] **Step 3: Confirm the dependency reference survived**
@@ -259,13 +280,33 @@ sed -i '' 's/MarkItDown Desktop/Foldmark/g; s|bjaysingh/microsoftmarkitdown|bjay
 sed -i '' 's/markitdown-desktop-/foldmark-/g' .github/workflows/release.yml
 ```
 
-- [ ] **Step 2: Confirm the archive rename is safe for the updater**
+- [ ] **Step 2: Rename ASSET_PREFIX to match the new archive name**
 
-`updater.py:40` matches assets by the suffix `-source.zip`, not the whole filename, so a renamed archive still resolves.
+This is load-bearing. `updater.py:236` resolves the source asset with **both** a prefix and a
+suffix test:
+
+```python
+source = _find_asset(assets, lambda n: n.startswith(ASSET_PREFIX) and n.endswith(ASSET_SUFFIX))
+```
+
+If the workflow emits `foldmark-2.0.0-source.zip` while `ASSET_PREFIX` still reads
+`"markitdown-desktop-"`, the updater finds no asset and every future update fails to start —
+silently, because a missing asset is not an exception.
 
 ```bash
-grep -n 'ASSET_SUFFIX' foldmark/updater.py     # expect "-source.zip"
+sed -i '' 's/^ASSET_PREFIX = "markitdown-desktop-"$/ASSET_PREFIX = "foldmark-"/' foldmark/updater.py
+grep -n 'ASSET_PREFIX\|ASSET_SUFFIX' foldmark/updater.py
 grep -n 'foldmark-\${VERSION}' .github/workflows/release.yml   # expect 4 hits
+```
+
+Expected: `ASSET_PREFIX = "foldmark-"`, `ASSET_SUFFIX = "-source.zip"`, and the workflow
+building `foldmark-${VERSION}-source.zip`. The constant and the workflow must agree — the
+workflow produces the filename the constant expects.
+
+Then confirm the updater's own tests still pass, since they assert on asset names:
+
+```bash
+.venv/bin/python -m unittest tests.test_updater 2>&1 | tail -3
 ```
 
 - [ ] **Step 3: Confirm attribution survived the doc rewrite**
@@ -492,3 +533,70 @@ Neither can be fixed from inside the repository:
 
 - Delete `~/Desktop/MarkItDown-Desktop-v1.0.0-demo/` and reinstall from the 2.0.0 release.
 - Delete `~/Claude/Projects/.obsidian/plugins/markitdown/`, install the new build as `foldmark`, and re-enable it in Obsidian.
+
+---
+
+### Task 8: Retire the releases published under the old name
+
+**Files:** none. This task acts on GitHub, not the repository.
+
+**Interfaces:**
+- Consumes: a published v2.0.0 from Task 7.
+- Produces: a releases page listing only Foldmark.
+
+**This task is irreversible.** Deleting a release destroys its source archive and
+`SHA256SUMS.txt`; they cannot be restored. It runs only after v2.0.0 is confirmed published,
+so the repository is never left without a release for the updater to find.
+
+**Scope, decided with the user:** delete the three releases and their tags. Git history is
+**not** rewritten — the old name remains visible in commit subjects and in the eight commits
+that touch `markitdown_desktop/` paths, and the spec and plan under `docs/superpowers/`
+deliberately name both sides of the rename. The user chose this knowing it leaves those
+traces; erasing them would mean a force-pushed history rewrite that invalidates every clone.
+
+- [ ] **Step 1: Confirm v2.0.0 is published before deleting anything**
+
+```bash
+gh release view v2.0.0 --json name,isDraft --jq '{name, isDraft}'
+```
+
+Expected: the v2.0.0 release exists and `isDraft` is `false`. If it does not, **stop** — do not
+delete the old releases while they are the only ones available.
+
+- [ ] **Step 2: Record what is about to be destroyed**
+
+```bash
+gh release list
+git tag | grep '^v1\.'
+```
+
+Expected: releases v1.0.1, v1.0.2, v1.0.3 and the matching tags.
+
+- [ ] **Step 3: Delete the three releases and their tags**
+
+`--cleanup-tag` removes the tag along with the release, and `--yes` skips the interactive
+prompt, which cannot be answered in this environment.
+
+```bash
+for v in v1.0.1 v1.0.2 v1.0.3; do
+  gh release delete "$v" --cleanup-tag --yes
+done
+```
+
+- [ ] **Step 4: Delete any local tag that survived, and prune**
+
+```bash
+git tag -d v1.0.1 v1.0.2 v1.0.3 2>/dev/null
+git fetch --prune --prune-tags origin
+git tag | tr '\n' ' '
+```
+
+Expected: only `v2.0.0` remains.
+
+- [ ] **Step 5: Verify the releases page shows only Foldmark**
+
+```bash
+gh release list
+```
+
+Expected: exactly one row, `Foldmark 2.0.0`, tagged `v2.0.0`.

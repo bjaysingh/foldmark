@@ -50,6 +50,8 @@ Settled with the user before implementation:
 | `claude-plugin/commands/markitdown.md` | `claude-plugin/commands/foldmark.md` |
 | `claude-plugin/hooks/markitdown_read_hook.py` | `claude-plugin/hooks/foldmark_read_hook.py` |
 | `markitdown-desktop-<version>-source.zip` | `foldmark-<version>-source.zip` |
+| `ASSET_PREFIX = "markitdown-desktop-"` in `updater.py` | `"foldmark-"` |
+| `MARKITDOWN_DESKTOP_ROOT` environment variable | `FOLDMARK_ROOT` |
 | `~/Claude/Projects/MicrosoftMarkItDown` | `~/Claude/Projects/Foldmark` |
 
 `hooks.json` must be updated in step with the hook filename, or the Claude Code plugin's
@@ -67,9 +69,21 @@ Settled with the user before implementation:
 
 ## Release mechanics
 
-`updater.py:40` matches release assets by the suffix `-source.zip`, not by the full filename,
-so renaming the archive does not break asset resolution. This was verified by reading the
-matcher rather than assumed.
+`updater.py:236` matches the source asset with **both** a prefix and a suffix:
+
+```python
+source = _find_asset(assets, lambda n: n.startswith(ASSET_PREFIX) and n.endswith(ASSET_SUFFIX))
+```
+
+`ASSET_PREFIX` is `"markitdown-desktop-"`. Renaming the release archive to
+`foldmark-<version>-source.zip` therefore **breaks asset resolution unless `ASSET_PREFIX` is
+renamed with it** — the updater would find no source asset and every future update would fail
+to start.
+
+An earlier draft of this spec claimed matching was suffix-only, having read the constant on
+line 40 without reading its use on line 236. The Task 1 implementer caught it. `ASSET_PREFIX`
+is now renamed in Task 4 alongside the workflow's archive name, and the two must stay in
+agreement: the workflow produces the filename that this constant expects.
 
 `release.yml` refuses a tag that disagrees with `__version__`, so the version bump and the tag
 must agree, as for any release. The five version declarations named in CLAUDE.md all still
