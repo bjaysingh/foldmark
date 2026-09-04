@@ -388,7 +388,24 @@ grep -ril "${AUDIT[@]}" -e markitdown_desktop -e "MarkItDown Desktop" -e microso
 grep -rio "${AUDIT[@]}" "Microsoft MarkItDown" . | wc -l
 ```
 
-Expected: the first command prints **nothing**; the second prints **28**.
+Expected: the first command prints hits in exactly four files — `app.py`,
+`foldmark/converter.py`, `foldmark/cli.py` and `tests/test_ocr.py` — and nothing else; the
+second prints **28**.
+
+**Those four hits are not failures.** Case-insensitively, `microsoftmarkitdown` also matches
+`MicrosoftMarkItDownConverter`, the class wrapping Microsoft's library. It is correctly named
+and must not be renamed, on the same principle as `markitdown_version()`. To separate real
+leftovers from it, re-run the first grep case-sensitively:
+
+```bash
+grep -rn "${AUDIT[@]}" -e markitdown_desktop -e "MarkItDown Desktop" -e microsoftmarkitdown \
+     -e 'MicrosoftMarkItDown"' .    # this must print nothing
+```
+
+Keep the case-insensitive pass despite the noise: it is what caught
+`obsidian-plugin/src/python.ts` hardcoding the old working-copy folder name as a checkout
+search path, a functional break that every case-sensitive sweep missed and that would only
+have surfaced after Task 6 moved the folder.
 
 A number other than 28 means the rename ate attribution. Find the last commit before this
 work with `git log --oneline` and diff from there:
