@@ -42,7 +42,7 @@ function candidateRoots(settings: FoldmarkSettings): string[] {
   roots.push(
     path.join(home, "foldmark"),
     path.join(home, "Documents", "foldmark"),
-    path.join(home, "Claude", "Projects", "MicrosoftMarkItDown")
+    path.join(home, "Claude", "Projects", "Foldmark")
   );
   return roots;
 }

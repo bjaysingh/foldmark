@@ -115,6 +115,19 @@ The rename is complete when all of the following pass:
    grep -rio "${AUDIT[@]}" "Microsoft MarkItDown" . | wc -l   # must print 28
    ```
 
+   **The `-i` flag matters and so does its cost.** Case-insensitively, `microsoftmarkitdown`
+   also matches `MicrosoftMarkItDownConverter` — the class in `foldmark/converter.py` that
+   wraps Microsoft's library. That name is correct and must stay: it names the dependency, like
+   `markitdown_version()` and `markitdownVersion`. Treat hits on that identifier in `app.py`,
+   `foldmark/converter.py`, `foldmark/cli.py` and `tests/test_ocr.py` as expected, not as
+   failures.
+
+   The insensitive match earns its keep anyway: it is what caught
+   `obsidian-plugin/src/python.ts` hardcoding `~/Claude/Projects/MicrosoftMarkItDown` as a
+   checkout search path, which every case-sensitive sweep had missed. That path is the working
+   copy Task 6 renames, so leaving it would have silently broken the Obsidian plugin's
+   auto-detection immediately after the move.
+
    The `specs` exclusion is required, not a convenience: this design document necessarily
    contains every string the audit forbids, because describing a rename means naming both
    sides of it. Without the exclusion the audit can never pass.

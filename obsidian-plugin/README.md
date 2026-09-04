@@ -15,7 +15,7 @@ The plugin looks for it in this order:
 
 1. The **Converter location** set in plugin settings
 2. `$FOLDMARK_ROOT`
-3. `~/foldmark`, `~/Documents/foldmark`, `~/Claude/Projects/MicrosoftMarkItDown`
+3. `~/foldmark`, `~/Documents/foldmark`, `~/Claude/Projects/Foldmark`
 
 Use **Settings → Foldmark → Test setup** to confirm it works. That button reports the
 interpreter, the Python version, and the installed MarkItDown version, so a misconfiguration
