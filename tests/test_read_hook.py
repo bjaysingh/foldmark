@@ -129,11 +129,11 @@ class PassThroughTests(HookHarness):
         self.assertPassThrough(self.read_event(Path(self.temp.name) / "absent.docx"))
 
     def test_oversized_file_is_skipped(self) -> None:
-        os.environ["MARKITDOWN_HOOK_MAX_MB"] = "0.00001"
+        os.environ["FOLDMARK_HOOK_MAX_MB"] = "0.00001"
         self.assertPassThrough(self.read_event(self.make("big.docx", size=4096)))
 
     def test_disable_switch_short_circuits(self) -> None:
-        os.environ["MARKITDOWN_HOOK_DISABLE"] = "1"
+        os.environ["FOLDMARK_HOOK_DISABLE"] = "1"
         self.assertPassThrough(self.read_event(self.make("report.docx")))
 
     def test_failed_conversion_fails_open(self) -> None:
@@ -146,7 +146,7 @@ class PassThroughTests(HookHarness):
         self.assertEqual(0, hook.main())
 
     def test_extension_list_is_configurable(self) -> None:
-        os.environ["MARKITDOWN_HOOK_EXTENSIONS"] = "rst, adoc"
+        os.environ["FOLDMARK_HOOK_EXTENSIONS"] = "rst, adoc"
         self.assertEqual({".rst", ".adoc"}, hook.wanted_extensions())
         self.assertPassThrough(self.read_event(self.make("report.docx")))
 
@@ -156,7 +156,7 @@ class SubprocessTests(unittest.TestCase):
 
     def run_hook(self, source: Path, temp: str, **env_extra) -> subprocess.CompletedProcess:
         event = json.dumps({"tool_name": "Read", "tool_input": {"file_path": str(source)}})
-        env = dict(os.environ, CLAUDE_PLUGIN_DATA=temp, MARKITDOWN_HOOK_TIMEOUT="60", **env_extra)
+        env = dict(os.environ, CLAUDE_PLUGIN_DATA=temp, FOLDMARK_HOOK_TIMEOUT="60", **env_extra)
         return subprocess.run(
             [sys.executable, str(HOOK_PATH)], input=event,
             capture_output=True, text=True, env=env, timeout=120,
@@ -167,7 +167,7 @@ class SubprocessTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             source = Path(temp) / "report.docx"
             source.write_bytes(b"not really a docx")
-            result = self.run_hook(source, temp, MARKITDOWN_PYTHON="/usr/bin/false")
+            result = self.run_hook(source, temp, FOLDMARK_PYTHON="/usr/bin/false")
             self.assertEqual(0, result.returncode, result.stderr)
             self.assertEqual("", result.stdout.strip(), "a failure must produce no decision")
 

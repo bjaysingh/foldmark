@@ -36,7 +36,7 @@ def env_flag(name: str) -> bool:
 
 
 def wanted_extensions() -> set[str]:
-    raw = os.environ.get("MARKITDOWN_HOOK_EXTENSIONS", "").strip()
+    raw = os.environ.get("FOLDMARK_HOOK_EXTENSIONS", "").strip()
     if not raw:
         return DEFAULT_EXTENSIONS
     return {
@@ -69,7 +69,7 @@ def find_project_root() -> Path | None:
 
 
 def find_python(root: Path | None) -> str:
-    override = os.environ.get("MARKITDOWN_PYTHON", "").strip()
+    override = os.environ.get("FOLDMARK_PYTHON", "").strip()
     if override:
         return override
     if root is not None:
@@ -137,7 +137,7 @@ def allow(updated_input: dict, note: str) -> None:
 
 
 def main() -> int:
-    if env_flag("MARKITDOWN_HOOK_DISABLE"):
+    if env_flag("FOLDMARK_HOOK_DISABLE"):
         return 0
     try:
         event = json.load(sys.stdin)
@@ -155,13 +155,13 @@ def main() -> int:
     if source.suffix.lower() not in wanted_extensions() or not source.is_file():
         return 0
 
-    max_bytes = env_float("MARKITDOWN_HOOK_MAX_MB", DEFAULT_MAX_MB) * 1024 * 1024
+    max_bytes = env_float("FOLDMARK_HOOK_MAX_MB", DEFAULT_MAX_MB) * 1024 * 1024
     if source.stat().st_size > max_bytes:
         return 0
 
     target = cache_dir() / f"{source.stem}-{cache_key(source)}.md"
     if not target.exists():
-        ok, message = convert(source, target, env_float("MARKITDOWN_HOOK_TIMEOUT", DEFAULT_TIMEOUT))
+        ok, message = convert(source, target, env_float("FOLDMARK_HOOK_TIMEOUT", DEFAULT_TIMEOUT))
         if not ok:
             # Fail open: say nothing and let the original Read happen.
             print(f"markitdown hook: {message}", file=sys.stderr)

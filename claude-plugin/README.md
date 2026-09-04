@@ -25,11 +25,11 @@ All optional, set as environment variables:
 | Variable | Default | Purpose |
 |---|---|---|
 | `FOLDMARK_ROOT` | auto-detected | Path to the checkout providing the converter |
-| `MARKITDOWN_PYTHON` | the checkout's `.venv` | Interpreter used for conversion |
-| `MARKITDOWN_HOOK_EXTENSIONS` | see below | Comma-separated list to convert, replacing the default set |
-| `MARKITDOWN_HOOK_MAX_MB` | `40` | Files larger than this are left alone |
-| `MARKITDOWN_HOOK_TIMEOUT` | `120` | Seconds before a conversion is abandoned |
-| `MARKITDOWN_HOOK_DISABLE` | unset | Set to `1` to turn the automatic hook off |
+| `FOLDMARK_PYTHON` | the checkout's `.venv` | Interpreter used for conversion |
+| `FOLDMARK_HOOK_EXTENSIONS` | see below | Comma-separated list to convert, replacing the default set |
+| `FOLDMARK_HOOK_MAX_MB` | `40` | Files larger than this are left alone |
+| `FOLDMARK_HOOK_TIMEOUT` | `120` | Seconds before a conversion is abandoned |
+| `FOLDMARK_HOOK_DISABLE` | unset | Set to `1` to turn the automatic hook off |
 
 Default extensions: `.pdf .docx .pptx .xlsx .xls .epub .msg .eml .zip .mp3 .wav .m4a .flac`
 
