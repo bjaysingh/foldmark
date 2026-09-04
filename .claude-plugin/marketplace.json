@@ -1,0 +1,18 @@
+{
+  "name": "foldmark",
+  "owner": {
+    "name": "bjaysingh",
+    "url": "https://github.com/bjaysingh"
+  },
+  "metadata": {
+    "description": "Foldmark's Claude Code plugin: converts documents Claude cannot read as text into Markdown before they reach the model.",
+    "version": "2.0.0"
+  },
+  "plugins": [
+    {
+      "name": "foldmark",
+      "source": "./claude-plugin",
+      "description": "Converts PDFs, Office documents, e-books, email and audio to Markdown with Microsoft MarkItDown, so Read returns their content instead of raw bytes."
+    }
+  ]
+}

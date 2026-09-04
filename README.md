@@ -4,6 +4,8 @@ A Windows and macOS desktop app for the open-source
 [Microsoft MarkItDown](https://github.com/microsoft/markitdown) conversion library — plus an
 Obsidian plugin and a Claude Code plugin that share the same converter.
 
+![Foldmark converting a batch of documents, with the Markdown preview open](docs/images/foldmark.png)
+
 ## What it does
 
 - Converts one file, many files, or an entire folder into Markdown

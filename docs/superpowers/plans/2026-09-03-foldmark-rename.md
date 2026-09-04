@@ -13,7 +13,11 @@
 ## Global Constraints
 
 - **Never rename** `from markitdown import MarkItDown`, `convert_local()`, or the pin `markitdown[pdf,docx,xlsx,xls,pptx,outlook,audio-transcription]==0.1.7`.
-- **Never rename** the phrase `Microsoft MarkItDown`. It must appear exactly **28** times when the work is done.
+- **Never rename** the phrase `Microsoft MarkItDown`. It must appear exactly **28** times when
+  the work is done. (That figure is a snapshot of the rename's completion. The count may
+  legitimately rise later when a new file credits the dependency — `.claude-plugin/marketplace.json`
+  took it to 29 on the same day. What must never happen is the count *falling*, which would
+  mean an existing attribution was renamed away.)
 - **Never rename** `MARKITDOWN_URL = "https://github.com/microsoft/markitdown"`.
 - **Never rename** `markitdown_version()` or the `markitdown_version` key in `version --json` — both report the dependency's version.
 - **Never rename** `shutil.which("markitdown")` in the Claude plugin hook — that resolves Microsoft's own CLI binary.

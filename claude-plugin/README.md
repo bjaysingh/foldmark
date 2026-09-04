@@ -11,6 +11,66 @@ so their content reaches the model instead of raw bytes.
   that it is reading a conversion and which file it came from.
 - **On demand.** `/foldmark <path>` converts files or a whole folder and reports results.
 
+## Installing it in Claude Code
+
+Two routes. Both need the converter itself available — see Requirements below.
+
+### From the marketplace (normal use)
+
+The repository publishes itself as a Claude Code marketplace, so it installs by name:
+
+```bash
+claude plugin marketplace add bjaysingh/foldmark
+claude plugin install foldmark@foldmark
+```
+
+Restart Claude Code, then confirm it is loaded:
+
+```bash
+claude plugin list
+```
+
+To update later, and to remove it:
+
+```bash
+claude plugin update foldmark      # restart to apply
+claude plugin uninstall foldmark
+```
+
+### From a local checkout (development)
+
+Loads the plugin for one session without installing it, which is the fastest way to try a
+change:
+
+```bash
+claude --plugin-dir ./claude-plugin
+```
+
+### Checking it actually works
+
+Registration is silent when it succeeds, so verify against a real document rather than
+assuming. In a session with the plugin loaded, ask Claude to read a PDF:
+
+```
+Read ~/Desktop/report.pdf and quote its first line.
+```
+
+If the plugin is active, Claude reports that it read a MarkItDown conversion and names the
+cache file it came from. If it is not, Claude sees the raw PDF bytes instead.
+
+You can also drive that check non-interactively, which is useful in scripts and CI:
+
+```bash
+claude -p "Use the Read tool on /path/to/report.pdf and quote the first line verbatim." \
+  --plugin-dir ./claude-plugin --allowed-tools Read
+```
+
+### Where the cache goes
+
+Inside Claude Code the conversions are written under `$CLAUDE_PLUGIN_DATA/foldmark-cache/`.
+Outside a plugin context — running the hook directly, or in tests — the same code falls back to
+`~/.foldmark/foldmark-cache/`. Both are correct; seeing two different paths is not a bug.
+
 ## Requirements
 
 A checkout of [bjaysingh/foldmark](https://github.com/bjaysingh/foldmark)
