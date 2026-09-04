@@ -1,16 +1,17 @@
 {
-  "name": "markitdown",
-  "displayName": "MarkItDown",
+  "name": "foldmark",
+  "displayName": "Foldmark",
   "version": "1.0.3",
   "description": "Converts PDFs, Office documents, e-books, email, and audio to Markdown with Microsoft MarkItDown before Claude reads them.",
-  "homepage": "https://github.com/bjaysingh/microsoftmarkitdown",
-  "repository": "https://github.com/bjaysingh/microsoftmarkitdown",
+  "homepage": "https://github.com/bjaysingh/foldmark",
+  "repository": "https://github.com/bjaysingh/foldmark",
   "license": "MIT",
   "keywords": [
     "markdown",
     "pdf",
     "docx",
     "markitdown",
+    "foldmark",
     "document-conversion"
   ],
   "hooks": "./hooks/hooks.json",

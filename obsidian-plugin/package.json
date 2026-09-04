@@ -1,5 +1,5 @@
 {
-  "name": "obsidian-markitdown",
+  "name": "obsidian-foldmark",
   "version": "1.0.3",
   "description": "Obsidian plugin that converts documents to Markdown with Microsoft MarkItDown.",
   "main": "main.js",
@@ -12,6 +12,7 @@
     "obsidian",
     "markdown",
     "markitdown",
+    "foldmark",
     "pdf",
     "docx"
   ],

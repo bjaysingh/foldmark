@@ -13,7 +13,7 @@ if errorlevel 1 goto failed
 REM Directory mode, not --onefile: a onefile build unpacks itself on every
 REM launch, which is slow with MarkItDown's dependencies.
 ".venv\Scripts\pyinstaller.exe" --noconfirm --clean --windowed ^
-  --name "MarkItDown Desktop" ^
+  --name "Foldmark" ^
   --additional-hooks-dir=. ^
   --collect-all markitdown ^
   app.py
@@ -24,13 +24,13 @@ if defined WINDOWS_CERT_PATH (
   echo Signing with %WINDOWS_CERT_PATH% ...
   signtool sign /f "%WINDOWS_CERT_PATH%" /p "%WINDOWS_CERT_PASSWORD%" /fd sha256 ^
     /tr http://timestamp.digicert.com /td sha256 ^
-    "dist\MarkItDown Desktop\MarkItDown Desktop.exe"
+    "dist\Foldmark\Foldmark.exe"
   if errorlevel 1 goto failed
 ) else (
   echo Built unsigned. Set WINDOWS_CERT_PATH and WINDOWS_CERT_PASSWORD to sign.
 )
 
-echo Build complete: dist\MarkItDown Desktop\MarkItDown Desktop.exe
+echo Build complete: dist\Foldmark\Foldmark.exe
 pause
 exit /b 0
 

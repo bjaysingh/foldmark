@@ -173,14 +173,14 @@ class AboutDialog:
     def __init__(self, parent: tk.Misc, app_version: str, markitdown_version: str,
                  *, ocr_engine: str | None = None) -> None:
         window = tk.Toplevel(parent)
-        window.title("About MarkItDown Desktop")
+        window.title("About Foldmark")
         window.configure(bg=theme.CANVAS)
         window.resizable(False, False)
         window.transient(parent)
 
         header = tk.Frame(window, bg=theme.NAVY)
         header.pack(fill="x")
-        tk.Label(header, text="MarkItDown Desktop", bg=theme.NAVY, fg="white",
+        tk.Label(header, text="Foldmark", bg=theme.NAVY, fg="white",
                  font=theme.ui(16, "bold")).pack(anchor="w", padx=20, pady=(16, 0))
         tk.Label(header, text=f"Version {app_version}", bg=theme.NAVY,
                  fg=theme.HEADER_SUBTITLE, font=theme.ui(9)).pack(anchor="w", padx=20, pady=(2, 14))

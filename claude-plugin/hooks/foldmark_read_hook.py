@@ -36,7 +36,7 @@ def env_flag(name: str) -> bool:
 
 
 def wanted_extensions() -> set[str]:
-    raw = os.environ.get("MARKITDOWN_HOOK_EXTENSIONS", "").strip()
+    raw = os.environ.get("FOLDMARK_HOOK_EXTENSIONS", "").strip()
     if not raw:
         return DEFAULT_EXTENSIONS
     return {
@@ -53,9 +53,9 @@ def env_float(name: str, fallback: float) -> float:
 
 
 def find_project_root() -> Path | None:
-    """Locate the checkout that provides markitdown_desktop.cli."""
+    """Locate the checkout that provides foldmark.cli."""
     candidates: list[Path] = []
-    override = os.environ.get("MARKITDOWN_DESKTOP_ROOT", "").strip()
+    override = os.environ.get("FOLDMARK_ROOT", "").strip()
     if override:
         candidates.append(Path(override).expanduser())
     plugin_root = os.environ.get("CLAUDE_PLUGIN_ROOT", "").strip()
@@ -63,13 +63,13 @@ def find_project_root() -> Path | None:
         candidates.append(Path(plugin_root).parent)
     candidates.extend(Path(__file__).resolve().parents[:4])
     for candidate in candidates:
-        if (candidate / "markitdown_desktop" / "cli.py").is_file():
+        if (candidate / "foldmark" / "cli.py").is_file():
             return candidate
     return None
 
 
 def find_python(root: Path | None) -> str:
-    override = os.environ.get("MARKITDOWN_PYTHON", "").strip()
+    override = os.environ.get("FOLDMARK_PYTHON", "").strip()
     if override:
         return override
     if root is not None:
@@ -81,8 +81,8 @@ def find_python(root: Path | None) -> str:
 
 def cache_dir() -> Path:
     base = os.environ.get("CLAUDE_PLUGIN_DATA", "").strip()
-    root = Path(base) if base else Path.home() / ".markitdown_desktop"
-    path = root / "markitdown-cache"
+    root = Path(base) if base else Path.home() / ".foldmark"
+    path = root / "foldmark-cache"
     path.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -98,7 +98,7 @@ def convert(source: Path, destination: Path, timeout: float) -> tuple[bool, str]
     root = find_project_root()
     python = find_python(root)
     if root is not None:
-        command = [python, "-m", "markitdown_desktop.cli", "convert", str(source), "--stdout"]
+        command = [python, "-m", "foldmark.cli", "convert", str(source), "--stdout"]
         cwd: str | None = str(root)
     else:
         # No checkout nearby: fall back to MarkItDown's own CLI if it is on PATH.
@@ -137,7 +137,7 @@ def allow(updated_input: dict, note: str) -> None:
 
 
 def main() -> int:
-    if env_flag("MARKITDOWN_HOOK_DISABLE"):
+    if env_flag("FOLDMARK_HOOK_DISABLE"):
         return 0
     try:
         event = json.load(sys.stdin)
@@ -155,13 +155,13 @@ def main() -> int:
     if source.suffix.lower() not in wanted_extensions() or not source.is_file():
         return 0
 
-    max_bytes = env_float("MARKITDOWN_HOOK_MAX_MB", DEFAULT_MAX_MB) * 1024 * 1024
+    max_bytes = env_float("FOLDMARK_HOOK_MAX_MB", DEFAULT_MAX_MB) * 1024 * 1024
     if source.stat().st_size > max_bytes:
         return 0
 
     target = cache_dir() / f"{source.stem}-{cache_key(source)}.md"
     if not target.exists():
-        ok, message = convert(source, target, env_float("MARKITDOWN_HOOK_TIMEOUT", DEFAULT_TIMEOUT))
+        ok, message = convert(source, target, env_float("FOLDMARK_HOOK_TIMEOUT", DEFAULT_TIMEOUT))
         if not ok:
             # Fail open: say nothing and let the original Read happen.
             print(f"markitdown hook: {message}", file=sys.stderr)

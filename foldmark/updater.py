@@ -24,23 +24,23 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import urlparse
 
-GITHUB_REPO = "bjaysingh/microsoftmarkitdown"
+GITHUB_REPO = "bjaysingh/foldmark"
 PROJECT_URL = f"https://github.com/{GITHUB_REPO}"
 MARKITDOWN_URL = "https://github.com/microsoft/markitdown"
 
 _API_TEMPLATE = "https://api.github.com/repos/{repo}/releases/latest"
-_API_OVERRIDE_ENV = "MARKITDOWN_RELEASES_API"
+_API_OVERRIDE_ENV = "FOLDMARK_RELEASES_API"
 
 MAX_ARCHIVE_BYTES = 50 * 1024 * 1024
 NETWORK_TIMEOUT = 5.0
 DOWNLOAD_TIMEOUT = 60.0
-USER_AGENT = "MarkItDown-Desktop-Updater"
+USER_AGENT = "Foldmark-Updater"
 
-ASSET_PREFIX = "markitdown-desktop-"
+ASSET_PREFIX = "foldmark-"
 ASSET_SUFFIX = "-source.zip"
 CHECKSUMS_NAME = "SHA256SUMS.txt"
 
-REQUIRED_ENTRIES = ("app.py", "requirements.txt", os.path.join("markitdown_desktop", "__init__.py"))
+REQUIRED_ENTRIES = ("app.py", "requirements.txt", os.path.join("foldmark", "__init__.py"))
 
 ALLOWED_HOSTS = {
     "github.com",

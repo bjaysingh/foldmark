@@ -3,7 +3,7 @@ import tempfile
 import threading
 import unittest
 
-from markitdown_desktop.converter import convert_files, discover_files
+from foldmark.converter import convert_files, discover_files
 
 
 class FakeConverter:

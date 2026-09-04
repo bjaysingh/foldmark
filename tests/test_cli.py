@@ -4,7 +4,7 @@ import json
 import tempfile
 import unittest
 
-from markitdown_desktop import cli
+from foldmark import cli
 
 
 class FakeConverter:
@@ -113,7 +113,7 @@ class MetadataCommandTests(unittest.TestCase):
         self.assertEqual(sorted(payload["extensions"]), payload["extensions"])
 
     def test_version_reports_app_version(self) -> None:
-        from markitdown_desktop import __version__
+        from foldmark import __version__
 
         code, output, _ = run(["version", "--json"])
         self.assertEqual(0, code)

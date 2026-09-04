@@ -1,4 +1,4 @@
-# MarkItDown Desktop
+# Foldmark
 
 A Windows and macOS desktop app for the open-source
 [Microsoft MarkItDown](https://github.com/microsoft/markitdown) conversion library — plus an
@@ -66,7 +66,7 @@ Shortcuts: `Ctrl/Cmd+O` adds files. `Ctrl/Cmd+Enter` starts conversion. `Delete`
 ## Automatic updates
 
 At launch the app asks GitHub for the newest release of
-[bjaysingh/microsoftmarkitdown](https://github.com/bjaysingh/microsoftmarkitdown). If a newer
+[bjaysingh/foldmark](https://github.com/bjaysingh/foldmark). If a newer
 version exists you are shown its release notes and can choose **Update now**, **Later**, or
 **Skip this version**. Choosing to update downloads a small source archive (tens of kilobytes,
 not the Python environment), verifies it against the release's `SHA256SUMS.txt`, installs it,
@@ -84,7 +84,7 @@ and restarts the app on the new version.
 - Checksums prove the download was not corrupted or tampered with in transit. They do not prove
   who wrote it: anyone who controls the GitHub repository controls what your app installs.
 
-**Turning it off:** set `"auto_check": false` in `~/.markitdown_desktop/settings.json`. The
+**Turning it off:** set `"auto_check": false` in `~/.foldmark/settings.json`. The
 **Check for updates…** button still works on demand.
 
 ## Obsidian plugin
@@ -103,10 +103,10 @@ Claude Code reads them, so the model receives text rather than raw bytes. See
 Both plugins — and anything else you want to script — use one entry point:
 
 ```bash
-python -m markitdown_desktop.cli convert report.pdf notes/ --out out/ --json
-python -m markitdown_desktop.cli convert report.pdf --stdout
-python -m markitdown_desktop.cli extensions --json
-python -m markitdown_desktop.cli version --json
+python -m foldmark.cli convert report.pdf notes/ --out out/ --json
+python -m foldmark.cli convert report.pdf --stdout
+python -m foldmark.cli extensions --json
+python -m foldmark.cli version --json
 ```
 
 Exit codes: `0` everything converted, `1` at least one file failed, `2` usage error.
@@ -144,10 +144,10 @@ equation, or layout detail.
 
 ## For maintainers — cutting a release
 
-1. Update `__version__` in `markitdown_desktop/__init__.py`.
+1. Update `__version__` in `foldmark/__init__.py`.
 2. Commit, then tag with a matching `v` prefix: `git tag v1.1.0 && git push --tags`.
 3. `.github/workflows/release.yml` verifies the tag matches `__version__`, runs the tests,
-   builds `markitdown-desktop-<version>-source.zip` plus `SHA256SUMS.txt`, publishes the
+   builds `foldmark-<version>-source.zip` plus `SHA256SUMS.txt`, publishes the
    release, and attaches the Obsidian plugin build and any signed desktop bundles.
 
 The tag/version check is deliberate: a release whose version disagrees with the code would make

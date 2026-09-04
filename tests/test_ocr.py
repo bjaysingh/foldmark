@@ -2,7 +2,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from markitdown_desktop.ocr import (
+from foldmark.ocr import (
     OcrFallbackConverter,
     OcrUnavailable,
     about_line,

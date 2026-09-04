@@ -5,12 +5,12 @@ import tempfile
 import unittest
 import zipfile
 
-from markitdown_desktop import updater
+from foldmark import updater
 
 
 def release(tag: str, assets: list[str] | None = None, body: str = "notes") -> dict:
     names = assets if assets is not None else [
-        f"markitdown-desktop-{tag.lstrip('v')}-source.zip",
+        f"foldmark-{tag.lstrip('v')}-source.zip",
         "SHA256SUMS.txt",
     ]
     return {
@@ -37,7 +37,7 @@ def make_zip(path: Path, entries: dict[str, str]) -> Path:
 VALID_TREE = {
     "app.py": "print('hi')\n",
     "requirements.txt": "markitdown[all]==0.1.7\n",
-    "markitdown_desktop/__init__.py": "__version__ = '1.1.0'\n",
+    "foldmark/__init__.py": "__version__ = '1.1.0'\n",
 }
 
 
@@ -66,7 +66,7 @@ class CheckForUpdateTests(unittest.TestCase):
         info = updater.check_for_update("1.0.0", fetch_json=self.fetch(release("v1.1.0")))
         self.assertIsNotNone(info)
         self.assertEqual("1.1.0", info.version)
-        self.assertTrue(info.asset_url.endswith("markitdown-desktop-1.1.0-source.zip"))
+        self.assertTrue(info.asset_url.endswith("foldmark-1.1.0-source.zip"))
         self.assertTrue(info.checksums_url.endswith("SHA256SUMS.txt"))
         self.assertEqual("notes", info.notes)
 
@@ -88,7 +88,7 @@ class CheckForUpdateTests(unittest.TestCase):
         self.assertIsNone(updater.check_for_update("1.0.0", fetch_json=self.fetch(payload)))
 
     def test_release_without_checksums_is_ignored(self) -> None:
-        payload = release("v1.1.0", assets=["markitdown-desktop-1.1.0-source.zip"])
+        payload = release("v1.1.0", assets=["foldmark-1.1.0-source.zip"])
         self.assertIsNone(updater.check_for_update("1.0.0", fetch_json=self.fetch(payload)))
 
     def test_draft_and_prerelease_are_ignored(self) -> None:
@@ -102,14 +102,14 @@ class CheckForUpdateTests(unittest.TestCase):
 
     def test_repo_slug_is_used_in_the_request(self) -> None:
         updater.check_for_update("1.0.0", fetch_json=self.fetch(release("v1.1.0")))
-        self.assertIn("bjaysingh/microsoftmarkitdown", self.requested)
+        self.assertIn("bjaysingh/foldmark", self.requested)
 
 
 class ChecksumTests(unittest.TestCase):
     def test_checksums_file_is_parsed(self) -> None:
-        text = "abc123  markitdown-desktop-1.1.0-source.zip\ndef456 *other.zip\n"
+        text = "abc123  foldmark-1.1.0-source.zip\ndef456 *other.zip\n"
         parsed = updater.parse_checksums(text)
-        self.assertEqual("abc123", parsed["markitdown-desktop-1.1.0-source.zip"])
+        self.assertEqual("abc123", parsed["foldmark-1.1.0-source.zip"])
         self.assertEqual("def456", parsed["other.zip"])
 
     def test_mismatched_digest_is_refused(self) -> None:
@@ -132,11 +132,11 @@ class StagingTests(unittest.TestCase):
             tree = self.stage(VALID_TREE, temp)
             updater.validate_tree(tree)
             self.assertTrue((tree / "app.py").exists())
-            self.assertTrue((tree / "markitdown_desktop" / "__init__.py").exists())
+            self.assertTrue((tree / "foldmark" / "__init__.py").exists())
 
     def test_single_wrapper_directory_is_unwrapped(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
-            wrapped = {f"markitdown-desktop-1.1.0/{k}": v for k, v in VALID_TREE.items()}
+            wrapped = {f"foldmark-1.1.0/{k}": v for k, v in VALID_TREE.items()}
             tree = self.stage(wrapped, temp)
             updater.validate_tree(tree)
             self.assertTrue((tree / "app.py").exists())

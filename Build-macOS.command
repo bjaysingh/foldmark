@@ -12,12 +12,12 @@ fi
 # which is slow with MarkItDown's dependencies, and the tkdnd data files are
 # more reliable when they sit alongside the binary.
 .venv/bin/pyinstaller --noconfirm --clean --windowed \
-  --name "MarkItDown Desktop" \
+  --name "Foldmark" \
   --additional-hooks-dir=. \
   --collect-all markitdown \
   app.py
 
-APP="dist/MarkItDown Desktop.app"
+APP="dist/Foldmark.app"
 
 # Signing is optional. Without it the app still runs, but macOS shows a
 # Gatekeeper warning the first time and users must Control-click and Open.

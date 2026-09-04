@@ -18,9 +18,9 @@ Setup-Windows.bat              # Windows
 .venv/bin/python -m unittest tests.test_updater.VersionTests.test_prerelease_sorts_below_its_release
 
 # The shared CLI both plugins call
-.venv/bin/python -m markitdown_desktop.cli convert <paths> --out <dir> --json
-.venv/bin/python -m markitdown_desktop.cli convert <file> --stdout
-.venv/bin/python -m markitdown_desktop.cli version --json
+.venv/bin/python -m foldmark.cli convert <paths> --out <dir> --json
+.venv/bin/python -m foldmark.cli convert <file> --stdout
+.venv/bin/python -m foldmark.cli version --json
 
 # Obsidian plugin
 cd obsidian-plugin && npm install && npm run build     # tsc --noEmit, then esbuild
@@ -32,15 +32,15 @@ claude --plugin-dir ./claude-plugin                    # load it in a session
 ```
 
 The `-t .` on `unittest discover` is required — without it the tests directory becomes the
-import root and `markitdown_desktop` cannot be imported.
+import root and `foldmark` cannot be imported.
 
 ## Architecture
 
 ### One conversion path, three consumers
 
-`markitdown_desktop/converter.py` is the only code that converts anything. The desktop GUI,
+`foldmark/converter.py` is the only code that converts anything. The desktop GUI,
 the Obsidian plugin and the Claude Code plugin all reach it, the last two by shelling out to
-`markitdown_desktop/cli.py`. Obsidian plugins are TypeScript in Electron and Claude Code
+`foldmark/cli.py`. Obsidian plugins are TypeScript in Electron and Claude Code
 plugins are Node; neither can call a Python library in-process, so the CLI is the seam. A
 change to supported extensions, output naming or failure handling propagates to all three
 automatically — and must not be reimplemented in either plugin.
@@ -67,12 +67,12 @@ python3 -m venv /tmp/bare && /tmp/bare/bin/python -m unittest discover -s tests 
 
 A running interpreter cannot safely have its own package directory replaced, and Windows
 locks files held open by a running process. So `app.py` stages a verified update, then spawns
-`markitdown_desktop/apply_update.py` **detached** and exits; the helper waits for the parent
+`foldmark/apply_update.py` **detached** and exits; the helper waits for the parent
 PID, swaps the trees, and relaunches.
 
 Consequences that are easy to break:
 
-- `apply_update.py` **must not import anything from `markitdown_desktop`** — that package is
+- `apply_update.py` **must not import anything from `foldmark`** — that package is
   precisely what is being replaced while it runs. It is copied to `.update/apply_update.py`
   and executed as a standalone script.
 - The swap only replaces what the update ships (`_managed_names`). `.venv`, `.update` and
@@ -98,14 +98,14 @@ reports every child as unmapped, which makes layout assertions silently vacuous.
 
 ## Releasing
 
-`markitdown_desktop/__init__.py::__version__` is the single source of truth.
+`foldmark/__init__.py::__version__` is the single source of truth.
 `.github/workflows/release.yml` refuses a tag that disagrees with it.
 
 1. Bump `__version__`, plus `obsidian-plugin/manifest.json`, `obsidian-plugin/package.json`,
    `obsidian-plugin/versions.json` and `claude-plugin/.claude-plugin/plugin.json`.
 2. Commit, then `git tag vX.Y.Z && git push origin main --tags`.
 
-The workflow runs the tests, builds `markitdown-desktop-<version>-source.zip` plus
+The workflow runs the tests, builds `foldmark-<version>-source.zip` plus
 `SHA256SUMS.txt` (the exact format `updater.parse_checksums` consumes), publishes the release
 and attaches the Obsidian plugin build. `LICENSE` must stay in the archive: MIT requires the
 notice to accompany every copy, and that archive is what the updater installs.

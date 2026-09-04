@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-title MarkItDown Desktop Setup
+title Foldmark Setup
 
 where py >nul 2>nul
 if %errorlevel%==0 (
